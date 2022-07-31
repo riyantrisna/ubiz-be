@@ -32,6 +32,7 @@ func (service *UserServiceImpl) Create(ctx context.Context, request web.UserCrea
 		UserName:     request.UserName,
 		UserEmail:    request.UserEmail,
 		UserPassword: request.UserPassword,
+		UserLangCode: request.UserLangCode,
 	}
 
 	userData = service.UserRepository.Save(ctx, tx, userData)
@@ -48,6 +49,7 @@ func (service *UserServiceImpl) Update(ctx context.Context, request web.UserUpda
 	if err == nil {
 		userData.UserName = request.UserName
 		userData.UserEmail = request.UserEmail
+		userData.UserLangCode = request.UserLangCode
 
 		userData = service.UserRepository.Update(ctx, tx, userData)
 	}

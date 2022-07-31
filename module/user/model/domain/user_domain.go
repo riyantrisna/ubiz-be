@@ -7,4 +7,5 @@ type User struct {
 	UserPassword     string
 	UserToken        string
 	UserTokenRefresh string
+	UserLangCode     string
 }

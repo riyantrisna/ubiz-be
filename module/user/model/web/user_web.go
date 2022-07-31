@@ -7,6 +7,7 @@ type UserCreateRequest struct {
 	UserName     string `validate:"required,min=1,max=200" json:"user_name"`
 	UserEmail    string `validate:"required,min=1,max=200,email" json:"user_email"`
 	UserPassword string `validate:"required,min=1"`
+	UserLangCode string `validate:"required,min=1" json:"user_lang_code"`
 }
 
 type UserLoginRequest struct {
@@ -21,9 +22,10 @@ type UserTokenUpdateRequest struct {
 }
 
 type UserUpdateRequest struct {
-	UserId    int    `validate:"required"`
-	UserName  string `validate:"required,min=1,max=200" json:"user_name"`
-	UserEmail string `validate:"required,min=1,max=200,email" json:"user_email"`
+	UserId       int    `validate:"required"`
+	UserName     string `validate:"required,min=1,max=200" json:"user_name"`
+	UserEmail    string `validate:"required,min=1,max=200,email" json:"user_email"`
+	UserLangCode string `validate:"required,min=1" json:"user_lang_code"`
 }
 
 // rersponse
@@ -31,6 +33,7 @@ type UserLoginResponse struct {
 	UserId       int    `json:"user_id"`
 	UserName     int    `json:"user_name"`
 	UserPassword string `json:"user_password"`
+	UserLangCode string `json:"user_lang_code"`
 }
 
 type UserResponse struct {
@@ -39,6 +42,7 @@ type UserResponse struct {
 	UserEmail        string `json:"user_email"`
 	UserToken        string `json:"user_token"`
 	UserTokenRefresh string `json:"user_token_refresh"`
+	UserLangCode     string `json:"user_lang_code"`
 }
 
 func ToUserResponse(user domain.User) UserResponse {
@@ -48,6 +52,7 @@ func ToUserResponse(user domain.User) UserResponse {
 		UserEmail:        user.UserEmail,
 		UserToken:        user.UserToken,
 		UserTokenRefresh: user.UserTokenRefresh,
+		UserLangCode:     user.UserLangCode,
 	}
 }
 

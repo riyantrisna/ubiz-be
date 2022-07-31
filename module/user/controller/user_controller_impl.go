@@ -213,9 +213,10 @@ func (controller *UserControllerImpl) Login(context *gin.Context) {
 		// start cretae JWT
 		expirationTime := time.Now().Add(time.Duration(expired) * time.Minute)
 		claims := middleware.Claims{
-			UserId:    userResponse.UserId,
-			UserName:  userResponse.UserName,
-			UserEmail: userResponse.UserEmail,
+			UserId:       userResponse.UserId,
+			UserName:     userResponse.UserName,
+			UserEmail:    userResponse.UserEmail,
+			UserLangCode: userResponse.UserLangCode,
 			StandardClaims: jwt.StandardClaims{
 				ExpiresAt: expirationTime.Unix(),
 			},
@@ -237,9 +238,10 @@ func (controller *UserControllerImpl) Login(context *gin.Context) {
 
 		expirationTimeRefresh := time.Now().Add(time.Duration(expiredRefresh) * time.Minute)
 		claimsRefresh := middleware.Claims{
-			UserId:    userResponse.UserId,
-			UserName:  userResponse.UserName,
-			UserEmail: userResponse.UserEmail,
+			UserId:       userResponse.UserId,
+			UserName:     userResponse.UserName,
+			UserEmail:    userResponse.UserEmail,
+			UserLangCode: userResponse.UserLangCode,
 			StandardClaims: jwt.StandardClaims{
 				ExpiresAt: expirationTimeRefresh.Unix(),
 			},

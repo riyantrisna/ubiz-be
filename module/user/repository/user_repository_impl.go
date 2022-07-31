@@ -17,8 +17,8 @@ func NewUserRepository() UserRepository {
 
 func (repository *UserRepositoryImpl) Save(ctx context.Context, tx *sql.Tx, user domain.User) domain.User {
 
-	SQL := "INSERT INTO user(user_name, user_email, user_password) VALUES (?, ?, ?)"
-	result, err := tx.ExecContext(ctx, SQL, user.UserName, user.UserEmail, user.UserPassword)
+	SQL := "INSERT INTO user(user_name, user_email, user_password, user_lang_code) VALUES (?, ?, ?, ?)"
+	result, err := tx.ExecContext(ctx, SQL, user.UserName, user.UserEmail, user.UserPassword, user.UserLangCode)
 	helper.PanicIfError(err)
 
 	id, err := result.LastInsertId()
@@ -29,8 +29,8 @@ func (repository *UserRepositoryImpl) Save(ctx context.Context, tx *sql.Tx, user
 }
 
 func (repository *UserRepositoryImpl) Update(ctx context.Context, tx *sql.Tx, user domain.User) domain.User {
-	SQL := "UPDATE user SET user_name = ?, user_email = ? WHERE user_id = ?"
-	_, err := tx.ExecContext(ctx, SQL, user.UserName, user.UserEmail, user.UserId)
+	SQL := "UPDATE user SET user_name = ?, user_email = ?, user_lang_code = ? WHERE user_id = ?"
+	_, err := tx.ExecContext(ctx, SQL, user.UserName, user.UserEmail, user.UserLangCode, user.UserId)
 	helper.PanicIfError(err)
 
 	return user
@@ -43,14 +43,14 @@ func (repository *UserRepositoryImpl) Delete(ctx context.Context, tx *sql.Tx, us
 }
 
 func (repository *UserRepositoryImpl) FindById(ctx context.Context, tx *sql.Tx, userId int) (domain.User, error) {
-	SQL := "SELECT user_id, user_name, user_email, IFNULL(user_token,''), IFNULL(user_token_refresh,'') FROM user WHERE user_id = ?"
+	SQL := "SELECT user_id, user_name, user_email, IFNULL(user_token,''), IFNULL(user_token_refresh,''), user_lang_code FROM user WHERE user_id = ?"
 	rows, err := tx.QueryContext(ctx, SQL, userId)
 	helper.PanicIfError(err)
 	defer rows.Close()
 
 	user := domain.User{}
 	if rows.Next() {
-		err := rows.Scan(&user.UserId, &user.UserName, &user.UserEmail, &user.UserToken, &user.UserTokenRefresh)
+		err := rows.Scan(&user.UserId, &user.UserName, &user.UserEmail, &user.UserToken, &user.UserTokenRefresh, &user.UserLangCode)
 		helper.PanicIfError(err)
 		return user, nil
 	} else {
@@ -59,7 +59,7 @@ func (repository *UserRepositoryImpl) FindById(ctx context.Context, tx *sql.Tx, 
 }
 
 func (repository *UserRepositoryImpl) FindAll(ctx context.Context, tx *sql.Tx) []domain.User {
-	SQL := "SELECT user_id, user_name, user_email, IFNULL(user_token,''), IFNULL(user_token_refresh,'') FROM user"
+	SQL := "SELECT user_id, user_name, user_email, IFNULL(user_token,''), IFNULL(user_token_refresh,''), user_lang_code FROM user"
 	rows, err := tx.QueryContext(ctx, SQL)
 	helper.PanicIfError(err)
 	defer rows.Close()
@@ -67,7 +67,7 @@ func (repository *UserRepositoryImpl) FindAll(ctx context.Context, tx *sql.Tx) [
 	var users []domain.User
 	for rows.Next() {
 		user := domain.User{}
-		err := rows.Scan(&user.UserId, &user.UserName, &user.UserEmail, &user.UserToken, &user.UserTokenRefresh)
+		err := rows.Scan(&user.UserId, &user.UserName, &user.UserEmail, &user.UserToken, &user.UserTokenRefresh, &user.UserLangCode)
 		helper.PanicIfError(err)
 		users = append(users, user)
 	}
@@ -76,14 +76,14 @@ func (repository *UserRepositoryImpl) FindAll(ctx context.Context, tx *sql.Tx) [
 }
 
 func (repository *UserRepositoryImpl) FindByEmail(ctx context.Context, tx *sql.Tx, userEmail string) (domain.User, error) {
-	SQL := "SELECT user_id, user_name, user_password FROM user WHERE user_email = ?"
+	SQL := "SELECT user_id, user_name, user_password, user_lang_code FROM user WHERE user_email = ?"
 	rows, err := tx.QueryContext(ctx, SQL, userEmail)
 	helper.PanicIfError(err)
 	defer rows.Close()
 
 	user := domain.User{}
 	if rows.Next() {
-		err := rows.Scan(&user.UserId, &user.UserName, &user.UserPassword)
+		err := rows.Scan(&user.UserId, &user.UserName, &user.UserPassword, &user.UserLangCode)
 		helper.PanicIfError(err)
 		return user, nil
 	} else {
