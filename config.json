@@ -15,5 +15,6 @@
         "expired": 5,
         "expiredRefresh": 6
     },
-    "defaultPassword": "Abc123"
+    "defaultPassword": "Abc123",
+    "defaultLang": "en"
 }
