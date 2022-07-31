@@ -1,0 +1,19 @@
+{
+    "mode": "development",
+    "address": ":9090",
+    "database": {
+        "mysql": {
+            "dbHost": "localhost",
+            "dbPort": "3306",
+            "dbUser": "root",
+            "dbPass": "",
+            "dbName": "collapp"
+        }
+    },
+    "jwt":{
+        "key": "RiyanGanteng",
+        "expired": 5,
+        "expiredRefresh": 6
+    },
+    "defaultPassword": "Abc123"
+}
