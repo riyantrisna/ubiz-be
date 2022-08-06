@@ -58,7 +58,7 @@ func (controller *LangControllerImpl) Create(context *gin.Context) {
 	langResponse := controller.LangService.Create(context.Request.Context(), langCreateRequest)
 	webResponse := helper.WebResponse{
 		Code:   200,
-		Status: "Success create lang",
+		Status: "Success create language",
 		Data:   langResponse,
 	}
 
@@ -106,7 +106,7 @@ func (controller *LangControllerImpl) Update(context *gin.Context) {
 	if langResponse.LangId != 0 {
 		webResponse := helper.WebResponse{
 			Code:   200,
-			Status: "Success update lang",
+			Status: "Success update language",
 			Data:   langResponse,
 		}
 
@@ -134,7 +134,7 @@ func (controller *LangControllerImpl) Delete(context *gin.Context) {
 	if langResponse.LangId != 0 {
 		webResponse := helper.WebResponse{
 			Code:   200,
-			Status: "Success delete lang",
+			Status: "Success delete language",
 		}
 
 		context.Writer.Header().Add("Content-Type", "application/json")
@@ -161,7 +161,7 @@ func (controller *LangControllerImpl) FindById(context *gin.Context) {
 	if langResponse.LangId != 0 {
 		webResponse := helper.WebResponse{
 			Code:   200,
-			Status: "Success get lang",
+			Status: "Success get language",
 			Data:   langResponse,
 		}
 
