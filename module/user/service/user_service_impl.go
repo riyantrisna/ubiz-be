@@ -116,3 +116,16 @@ func (service *UserServiceImpl) UpdateToken(ctx context.Context, request web.Use
 
 	return web.ToUserResponse(userData)
 }
+
+func (service *UserServiceImpl) Logout(ctx context.Context, userId int) web.UserResponse {
+	tx, err := service.DB.Begin()
+	helper.PanicIfError(err)
+	defer helper.CommitOrRollback(tx)
+
+	userData, err := service.UserRepository.FindById(ctx, tx, userId)
+	if err == nil {
+		service.UserRepository.Logout(ctx, tx, userData)
+	}
+
+	return web.ToUserResponse(userData)
+}

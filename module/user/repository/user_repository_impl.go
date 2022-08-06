@@ -95,3 +95,11 @@ func (repository *UserRepositoryImpl) UpdateToken(ctx context.Context, tx *sql.T
 
 	return user
 }
+
+func (repository *UserRepositoryImpl) Logout(ctx context.Context, tx *sql.Tx, user domain.User) domain.User {
+	SQL := "UPDATE user SET user_token = NULL, user_token_refresh = NULL WHERE user_id = ?"
+	_, err := tx.ExecContext(ctx, SQL, user.UserId)
+	helper.PanicIfError(err)
+
+	return user
+}

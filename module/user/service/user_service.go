@@ -13,4 +13,5 @@ type UserService interface {
 	FindAll(ctx context.Context) []web.UserResponse
 	FindByEmail(ctx context.Context, userEmail string) web.UserLoginResponse
 	UpdateToken(ctx context.Context, request web.UserTokenUpdateRequest) web.UserResponse
+	Logout(ctx context.Context, userId int) web.UserResponse
 }

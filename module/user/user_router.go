@@ -21,6 +21,7 @@ func Router(db *sql.DB, router *gin.RouterGroup) {
 		users.POST("/", userController.Create)
 		users.PUT("/:userId", userController.Update)
 		users.DELETE("/:userId", userController.Delete)
+		users.PUT("/logout", userController.Logout)
 	}
 
 }

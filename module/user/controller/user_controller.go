@@ -11,4 +11,5 @@ type UserController interface {
 	FindById(context *gin.Context)
 	FindAll(context *gin.Context)
 	Login(context *gin.Context)
+	Logout(context *gin.Context)
 }

@@ -299,5 +299,33 @@ func (controller *UserControllerImpl) Login(context *gin.Context) {
 		context.Writer.Header().Add("Content-Type", "application/json")
 		context.JSON(http.StatusUnauthorized, webResponse)
 	}
+}
 
+func (controller *UserControllerImpl) Logout(context *gin.Context) {
+	userId := 0
+	value, ok := context.Get("user_id")
+	if ok {
+		userId = value.(int)
+	}
+
+	userResponse := controller.UserService.Logout(context.Request.Context(), userId)
+
+	if userResponse.UserId != 0 {
+		webResponse := helper.WebResponse{
+			Code:   200,
+			Status: "Success logout",
+		}
+
+		context.Writer.Header().Add("Content-Type", "application/json")
+		context.JSON(200, webResponse)
+	} else {
+		webResponse := helper.WebResponse{
+			Code:   http.StatusNotFound,
+			Status: "Data not found",
+			Data:   nil,
+		}
+
+		context.Writer.Header().Add("Content-Type", "application/json")
+		context.JSON(http.StatusNotFound, webResponse)
+	}
 }
