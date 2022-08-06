@@ -3,6 +3,7 @@ package main
 import (
 	"collapp/app"
 	"collapp/middleware"
+	"collapp/module/lang"
 	"collapp/module/user"
 
 	"github.com/gin-gonic/gin"
@@ -24,6 +25,7 @@ func main() {
 	api := router.Group("/api/v1")
 
 	user.Router(db, api)
+	lang.Router(db, api)
 
 	appPort := viper.GetString("address")
 	if appPort == "" {

@@ -5,7 +5,6 @@ import (
 	"collapp/module/user/model/domain"
 	"context"
 	"database/sql"
-	"errors"
 )
 
 type UserRepositoryImpl struct {
@@ -52,10 +51,9 @@ func (repository *UserRepositoryImpl) FindById(ctx context.Context, tx *sql.Tx, 
 	if rows.Next() {
 		err := rows.Scan(&user.UserId, &user.UserName, &user.UserEmail, &user.UserToken, &user.UserTokenRefresh, &user.UserLangCode)
 		helper.PanicIfError(err)
-		return user, nil
-	} else {
-		return user, errors.New("user is not found")
 	}
+
+	return user, nil
 }
 
 func (repository *UserRepositoryImpl) FindAll(ctx context.Context, tx *sql.Tx) []domain.User {
@@ -85,10 +83,9 @@ func (repository *UserRepositoryImpl) FindByEmail(ctx context.Context, tx *sql.T
 	if rows.Next() {
 		err := rows.Scan(&user.UserId, &user.UserName, &user.UserPassword, &user.UserLangCode)
 		helper.PanicIfError(err)
-		return user, nil
-	} else {
-		return user, errors.New("user is not found")
 	}
+
+	return user, nil
 }
 
 func (repository *UserRepositoryImpl) UpdateToken(ctx context.Context, tx *sql.Tx, user domain.User) domain.User {
