@@ -33,6 +33,8 @@ func (service *UserServiceImpl) Create(ctx context.Context, request web.UserCrea
 		UserEmail:    request.UserEmail,
 		UserPassword: request.UserPassword,
 		UserLangCode: request.UserLangCode,
+		CreatedBy:    request.CreatedBy,
+		CreatedAt:    request.CreatedAt,
 	}
 
 	userData = service.UserRepository.Save(ctx, tx, userData)
@@ -50,6 +52,8 @@ func (service *UserServiceImpl) Update(ctx context.Context, request web.UserUpda
 		userData.UserName = request.UserName
 		userData.UserEmail = request.UserEmail
 		userData.UserLangCode = request.UserLangCode
+		userData.UpdatedBy = request.UpdatedBy
+		userData.UpdatedAt = request.UpdatedAt
 
 		userData = service.UserRepository.Update(ctx, tx, userData)
 	}
@@ -100,7 +104,17 @@ func (service *UserServiceImpl) FindByEmail(ctx context.Context, userEmail strin
 	return web.ToUserLoginResponse(userData)
 }
 
-func (service *UserServiceImpl) UpdateToken(ctx context.Context, request web.UserTokenUpdateRequest) web.UserResponse {
+func (service *UserServiceImpl) FindByTokenRefresh(ctx context.Context, userTokenRefresh string) web.UserLoginResponse {
+	tx, err := service.DB.Begin()
+	helper.PanicIfError(err)
+	defer helper.CommitOrRollback(tx)
+
+	userData, _ := service.UserRepository.FindByTokenRefresh(ctx, tx, userTokenRefresh)
+
+	return web.ToUserLoginResponse(userData)
+}
+
+func (service *UserServiceImpl) UpdateToken(ctx context.Context, request domain.User) web.UserResponse {
 	tx, err := service.DB.Begin()
 	helper.PanicIfError(err)
 	defer helper.CommitOrRollback(tx)
@@ -110,6 +124,7 @@ func (service *UserServiceImpl) UpdateToken(ctx context.Context, request web.Use
 		userData.UserId = request.UserId
 		userData.UserToken = request.UserToken
 		userData.UserTokenRefresh = request.UserTokenRefresh
+		userData.UserLastLogin = request.UserLastLogin
 
 		userData = service.UserRepository.UpdateToken(ctx, tx, userData)
 	}

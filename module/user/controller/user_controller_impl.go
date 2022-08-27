@@ -3,6 +3,7 @@ package controller
 import (
 	"collapp/helper"
 	"collapp/middleware"
+	"collapp/module/user/model/domain"
 	"collapp/module/user/model/web"
 	"collapp/module/user/service"
 	"database/sql"
@@ -38,6 +39,16 @@ func (controller *UserControllerImpl) Create(context *gin.Context) {
 	userCreateRequest := web.UserCreateRequest{}
 	context.Bind(&userCreateRequest)
 
+	value, ok := context.Get("user_id")
+	if ok {
+		userCreateRequest.CreatedBy = value.(int)
+	} else {
+		userCreateRequest.CreatedBy = 0
+	}
+
+	currentTime := time.Now()
+	userCreateRequest.CreatedAt = currentTime.Format("2006-01-02 15:04:05")
+
 	hashedPassword, err := bcrypt.GenerateFromPassword(password, bcrypt.DefaultCost)
 	helper.PanicIfError(err)
 
@@ -70,6 +81,16 @@ func (controller *UserControllerImpl) Create(context *gin.Context) {
 func (controller *UserControllerImpl) Update(context *gin.Context) {
 	userUpdateRequest := web.UserUpdateRequest{}
 	context.Bind(&userUpdateRequest)
+
+	value, ok := context.Get("user_id")
+	if ok {
+		userUpdateRequest.UpdatedBy = value.(int)
+	} else {
+		userUpdateRequest.UpdatedBy = 0
+	}
+
+	currentTime := time.Now()
+	userUpdateRequest.UpdatedAt = currentTime.Format("2006-01-02 15:04:05")
 
 	userId := context.Param("userId")
 	id, err := strconv.Atoi(userId)
@@ -193,6 +214,7 @@ func (controller *UserControllerImpl) FindAll(context *gin.Context) {
 }
 
 func (controller *UserControllerImpl) Login(context *gin.Context) {
+	currentTime := time.Now()
 	userLoginRequest := web.UserLoginRequest{}
 	context.Bind(&userLoginRequest)
 
@@ -264,12 +286,13 @@ func (controller *UserControllerImpl) Login(context *gin.Context) {
 		userResponse.UserToken = tokenString
 		userResponse.UserTokenRefresh = tokenStringRefresh
 
-		userTokenUpdateRequest := web.UserTokenUpdateRequest{}
+		userData := domain.User{}
 
-		userTokenUpdateRequest.UserId = userResponse.UserId
-		userTokenUpdateRequest.UserToken = tokenString
-		userTokenUpdateRequest.UserTokenRefresh = tokenStringRefresh
-		userTokenUpdateResponse := controller.UserService.UpdateToken(context.Request.Context(), userTokenUpdateRequest)
+		userData.UserId = userResponse.UserId
+		userData.UserToken = tokenString
+		userData.UserTokenRefresh = tokenStringRefresh
+		userData.UserLastLogin = currentTime.Format("2006-01-02 15:04:05")
+		userTokenUpdateResponse := controller.UserService.UpdateToken(context.Request.Context(), userData)
 		//end create JWT
 
 		if userTokenUpdateResponse.UserEmail != "" {
@@ -294,6 +317,128 @@ func (controller *UserControllerImpl) Login(context *gin.Context) {
 		webResponse := helper.WebResponse{
 			Code:   http.StatusUnauthorized,
 			Status: "Worng email or password",
+		}
+
+		context.Writer.Header().Add("Content-Type", "application/json")
+		context.JSON(http.StatusUnauthorized, webResponse)
+	}
+}
+
+func (controller *UserControllerImpl) RefreshToken(context *gin.Context) {
+	currentTime := time.Now()
+	userRefreshToken := context.Param("userRefreshToken")
+
+	claims := &middleware.Claims{}
+
+	tkn, _ := jwt.ParseWithClaims(userRefreshToken, claims, func(token *jwt.Token) (interface{}, error) {
+		return jwtKey, nil
+	})
+
+	if !tkn.Valid {
+		webResponse := helper.WebResponse{
+			Code:   http.StatusUnauthorized,
+			Status: "Unauthorized",
+		}
+
+		context.Writer.Header().Add("Content-Type", "application/json")
+		context.JSON(http.StatusUnauthorized, webResponse)
+		return
+	}
+
+	userCheck := controller.UserService.FindByTokenRefresh(context.Request.Context(), userRefreshToken)
+
+	if userCheck.UserId != 0 {
+
+		userResponse := controller.UserService.FindById(context.Request.Context(), userCheck.UserId)
+
+		expired := viper.GetInt(`jwt.expired`)
+		expiredRefresh := viper.GetInt(`jwt.expiredRefresh`)
+
+		// start cretae JWT
+		expirationTime := time.Now().Add(time.Duration(expired) * time.Minute)
+		claims := middleware.Claims{
+			UserId:       userResponse.UserId,
+			UserName:     userResponse.UserName,
+			UserEmail:    userResponse.UserEmail,
+			UserLangCode: userResponse.UserLangCode,
+			StandardClaims: jwt.StandardClaims{
+				ExpiresAt: expirationTime.Unix(),
+			},
+		}
+		token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+		tokenString, err := token.SignedString(jwtKey)
+
+		if err != nil {
+			webResponse := helper.WebResponse{
+				Code:   http.StatusInternalServerError,
+				Status: "Internal Server Error",
+				Data:   err,
+			}
+
+			context.Writer.Header().Add("Content-Type", "application/json")
+			context.JSON(http.StatusInternalServerError, webResponse)
+			return
+		}
+
+		expirationTimeRefresh := time.Now().Add(time.Duration(expiredRefresh) * time.Minute)
+		claimsRefresh := middleware.Claims{
+			UserId:       userResponse.UserId,
+			UserName:     userResponse.UserName,
+			UserEmail:    userResponse.UserEmail,
+			UserLangCode: userResponse.UserLangCode,
+			StandardClaims: jwt.StandardClaims{
+				ExpiresAt: expirationTimeRefresh.Unix(),
+			},
+		}
+		tokenRefresgh := jwt.NewWithClaims(jwt.SigningMethodHS256, claimsRefresh)
+		tokenStringRefresh, err := tokenRefresgh.SignedString(jwtKey)
+
+		if err != nil {
+			webResponse := helper.WebResponse{
+				Code:   http.StatusInternalServerError,
+				Status: "Internal Server Error",
+				Data:   err,
+			}
+
+			context.Writer.Header().Add("Content-Type", "application/json")
+			context.JSON(http.StatusInternalServerError, webResponse)
+			return
+		}
+
+		userResponse.UserToken = tokenString
+		userResponse.UserTokenRefresh = tokenStringRefresh
+
+		userData := domain.User{}
+
+		userData.UserId = userResponse.UserId
+		userData.UserToken = tokenString
+		userData.UserTokenRefresh = tokenStringRefresh
+		userData.UserLastLogin = currentTime.Format("2006-01-02 15:04:05")
+		userTokenUpdateResponse := controller.UserService.UpdateToken(context.Request.Context(), userData)
+		//end create JWT
+
+		if userTokenUpdateResponse.UserEmail != "" {
+			webResponse := helper.WebResponse{
+				Code:   200,
+				Status: "Refresh token success",
+				Data:   userResponse,
+			}
+			context.Writer.Header().Add("Content-Type", "application/json")
+			context.JSON(200, webResponse)
+		} else {
+			webResponse := helper.WebResponse{
+				Code:   http.StatusInternalServerError,
+				Status: "Internal Server Error",
+				Data:   err,
+			}
+
+			context.Writer.Header().Add("Content-Type", "application/json")
+			context.JSON(http.StatusInternalServerError, webResponse)
+		}
+	} else {
+		webResponse := helper.WebResponse{
+			Code:   http.StatusUnauthorized,
+			Status: "Unauthorized",
 		}
 
 		context.Writer.Header().Add("Content-Type", "application/json")

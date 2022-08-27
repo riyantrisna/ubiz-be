@@ -14,6 +14,7 @@ func Router(db *sql.DB, router *gin.RouterGroup) {
 	users := router.Group("/users")
 
 	users.POST("/login", userController.Login)
+	users.GET("/refresh-token/:userRefreshToken", userController.RefreshToken)
 	users.Use(middleware.Auth(db))
 	{
 		users.GET("/", userController.FindAll)

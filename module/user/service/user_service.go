@@ -1,6 +1,7 @@
 package service
 
 import (
+	"collapp/module/user/model/domain"
 	"collapp/module/user/model/web"
 	"context"
 )
@@ -12,6 +13,7 @@ type UserService interface {
 	FindById(ctx context.Context, userId int) web.UserResponse
 	FindAll(ctx context.Context) []web.UserResponse
 	FindByEmail(ctx context.Context, userEmail string) web.UserLoginResponse
-	UpdateToken(ctx context.Context, request web.UserTokenUpdateRequest) web.UserResponse
+	FindByTokenRefresh(ctx context.Context, userTokenRefresh string) web.UserLoginResponse
+	UpdateToken(ctx context.Context, request domain.User) web.UserResponse
 	Logout(ctx context.Context, userId int) web.UserResponse
 }

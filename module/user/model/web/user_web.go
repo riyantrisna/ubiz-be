@@ -8,17 +8,8 @@ type UserCreateRequest struct {
 	UserEmail    string `validate:"required,min=1,max=200,email" json:"user_email"`
 	UserPassword string `validate:"required,min=1"`
 	UserLangCode string `validate:"required,min=1" json:"user_lang_code"`
-}
-
-type UserLoginRequest struct {
-	UserEmail    string `validate:"required,min=1,email" json:"email"`
-	UserPassword string `validate:"required,min=1" json:"password"`
-}
-
-type UserTokenUpdateRequest struct {
-	UserId           int    `validate:"required"`
-	UserToken        string `validate:"required" json:"user_token"`
-	UserTokenRefresh string `validate:"required" json:"user_token_refresh"`
+	CreatedBy    int    `validate:"required"`
+	CreatedAt    string `validate:"required"`
 }
 
 type UserUpdateRequest struct {
@@ -26,6 +17,13 @@ type UserUpdateRequest struct {
 	UserName     string `validate:"required,min=1,max=200" json:"user_name"`
 	UserEmail    string `validate:"required,min=1,max=200,email" json:"user_email"`
 	UserLangCode string `validate:"required,min=1" json:"user_lang_code"`
+	UpdatedBy    int    `validate:"required"`
+	UpdatedAt    string `validate:"required"`
+}
+
+type UserLoginRequest struct {
+	UserEmail    string `validate:"required,min=1,email" json:"email"`
+	UserPassword string `validate:"required,min=1" json:"password"`
 }
 
 // rersponse
@@ -43,6 +41,13 @@ type UserResponse struct {
 	UserToken        string `json:"user_token"`
 	UserTokenRefresh string `json:"user_token_refresh"`
 	UserLangCode     string `json:"user_lang_code"`
+	UserLastLogin    string `json:"user_last_login"`
+	CreatedBy        int    `json:"created_by"`
+	CreatedByName    string `json:"created_by_name"`
+	CreatedAt        string `json:"created_at"`
+	UpdatedBy        int    `json:"updated_by"`
+	UpdatedByName    string `json:"updated_by_name"`
+	UpdatedAt        string `json:"updated_at"`
 }
 
 func ToUserResponse(user domain.User) UserResponse {
@@ -53,6 +58,13 @@ func ToUserResponse(user domain.User) UserResponse {
 		UserToken:        user.UserToken,
 		UserTokenRefresh: user.UserTokenRefresh,
 		UserLangCode:     user.UserLangCode,
+		UserLastLogin:    user.UserLastLogin,
+		CreatedBy:        user.CreatedBy,
+		CreatedByName:    user.CreatedByName,
+		CreatedAt:        user.CreatedAt,
+		UpdatedBy:        user.UpdatedBy,
+		UpdatedByName:    user.UpdatedByName,
+		UpdatedAt:        user.UpdatedAt,
 	}
 }
 

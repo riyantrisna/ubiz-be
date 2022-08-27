@@ -42,7 +42,7 @@ func (repository *LangRepositoryImpl) Delete(ctx context.Context, tx *sql.Tx, la
 }
 
 func (repository *LangRepositoryImpl) FindById(ctx context.Context, tx *sql.Tx, langId int) (domain.Lang, error) {
-	SQL := "SELECT lang_id, lang_code, lang_name,  IFNULL(created_by,0),  IFNULL(created_at,''), IFNULL(updated_by,0), IFNULL(updated_at,'') FROM lang WHERE lang_id = ?"
+	SQL := "SELECT lang_id, lang_code, lang_name, IFNULL(created_by,0), IFNULL(created_at,''), IFNULL(updated_by,0), IFNULL(updated_at,'') FROM lang WHERE lang_id = ?"
 	rows, err := tx.QueryContext(ctx, SQL, langId)
 	helper.PanicIfError(err)
 	defer rows.Close()
@@ -57,7 +57,7 @@ func (repository *LangRepositoryImpl) FindById(ctx context.Context, tx *sql.Tx, 
 }
 
 func (repository *LangRepositoryImpl) FindAll(ctx context.Context, tx *sql.Tx) []domain.Lang {
-	SQL := "SELECT lang_id, lang_code, lang_name, IFNULL(created_by,0),  IFNULL(created_at,''), IFNULL(updated_by,0), IFNULL(updated_at,'') FROM lang"
+	SQL := "SELECT lang_id, lang_code, lang_name, IFNULL(created_by,0), IFNULL(created_at,''), IFNULL(updated_by,0), IFNULL(updated_at,'') FROM lang"
 	rows, err := tx.QueryContext(ctx, SQL)
 	helper.PanicIfError(err)
 	defer rows.Close()
