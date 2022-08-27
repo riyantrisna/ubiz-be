@@ -14,14 +14,18 @@ func NewDB() *sql.DB {
 	dbUser := viper.GetString(`database.mysql.dbUser`)
 	dbPass := viper.GetString(`database.mysql.dbPass`)
 	dbName := viper.GetString(`database.mysql.dbName`)
+	maxIdleConns := viper.GetInt(`database.mysql.maxIdleConns`)
+	maxOpenConns := viper.GetInt(`database.mysql.maxOpenConns`)
+	connMaxLifetime := viper.GetDuration(`database.mysql.connMaxLifetime`)
+	connMaxIdleTime := viper.GetDuration(`database.mysql.connMaxIdleTime`)
 
 	db, err := sql.Open("mysql", dbUser+":"+dbPass+"@tcp("+dbHost+":"+dbPort+")/"+dbName)
 	helper.PanicIfError(err)
 
-	db.SetMaxIdleConns(5)
-	db.SetMaxOpenConns(20)
-	db.SetConnMaxLifetime(60 * time.Minute)
-	db.SetConnMaxIdleTime(10 * time.Minute)
+	db.SetMaxIdleConns(maxIdleConns)
+	db.SetMaxOpenConns(maxOpenConns)
+	db.SetConnMaxLifetime(connMaxLifetime * time.Minute)
+	db.SetConnMaxIdleTime(connMaxIdleTime * time.Minute)
 
 	return db
 }
