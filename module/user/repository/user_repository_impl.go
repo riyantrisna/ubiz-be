@@ -94,23 +94,28 @@ func (repository *UserRepositoryImpl) SoftDelete(ctx context.Context, tx *sql.Tx
 
 func (repository *UserRepositoryImpl) FindById(ctx context.Context, tx *sql.Tx, userId int) (domain.User, error) {
 	SQL := `SELECT 
-				user_id, 
-				user_name, 
-				user_email, 
-				IFNULL(user_token,''), 
-				IFNULL(user_token_refresh,''), 
-				user_lang_code, 
-				IFNULL(user_last_login,''), 
-				IFNULL(created_by,0), 
-				IFNULL(created_at,''), 
-				IFNULL(updated_by,0), 
-				IFNULL(updated_at,''), 
-				IFNULL(deleted_by,0), 
-				IFNULL(deleted_at,'') 
+				a.user_id, 
+				a.user_name, 
+				a.user_email, 
+				IFNULL(a.user_token,''), 
+				IFNULL(a.user_token_refresh,''), 
+				a.user_lang_code, 
+				IFNULL(a.user_last_login,''), 
+				IFNULL(a.created_by,0), 
+				IFNULL(b.user_name,''),
+				IFNULL(a.created_at,''), 
+				IFNULL(a.updated_by,0), 
+				IFNULL(c.user_name,''),
+				IFNULL(a.updated_at,'')
 			FROM 
-				user 
+				user a 
+			LEFT JOIN
+				user b ON b.user_id = a.created_by
+			LEFT JOIN
+				user c ON c.user_id = a.updated_by
 			WHERE 
-				user_id = ?`
+				a.user_id = ?
+				AND a.deleted_at IS NULL`
 	rows, err := tx.QueryContext(ctx, SQL, userId)
 	helper.PanicIfError(err)
 	defer rows.Close()
@@ -126,11 +131,11 @@ func (repository *UserRepositoryImpl) FindById(ctx context.Context, tx *sql.Tx, 
 			&user.UserLangCode,
 			&user.UserLastLogin,
 			&user.CreatedBy,
+			&user.CreatedByName,
 			&user.CreatedAt,
 			&user.UpdatedBy,
-			&user.UpdatedAt,
-			&user.DeletedBy,
-			&user.DeletedAt)
+			&user.UpdatedByName,
+			&user.UpdatedAt)
 		helper.PanicIfError(err)
 	}
 
@@ -139,21 +144,27 @@ func (repository *UserRepositoryImpl) FindById(ctx context.Context, tx *sql.Tx, 
 
 func (repository *UserRepositoryImpl) FindAll(ctx context.Context, tx *sql.Tx) []domain.User {
 	SQL := `SELECT 
-				user_id, 
-				user_name, 
-				user_email, 
-				IFNULL(user_token,''), 
-				IFNULL(user_token_refresh,''), 
-				user_lang_code, 
-				IFNULL(user_last_login,''), 
-				IFNULL(created_by,0), 
-				IFNULL(created_at,''), 
-				IFNULL(updated_by,0), 
-				IFNULL(updated_at,''), 
-				IFNULL(deleted_by,0), 
-				IFNULL(deleted_at,'') 
+				a.user_id, 
+				a.user_name, 
+				a.user_email, 
+				IFNULL(a.user_token,''), 
+				IFNULL(a.user_token_refresh,''), 
+				a.user_lang_code, 
+				IFNULL(a.user_last_login,''), 
+				IFNULL(a.created_by,0), 
+				IFNULL(b.user_name,''),
+				IFNULL(a.created_at,''), 
+				IFNULL(a.updated_by,0), 
+				IFNULL(c.user_name,''),
+				IFNULL(a.updated_at,'')
 			FROM 
-				user`
+				user a
+			LEFT JOIN
+				user b ON b.user_id = a.created_by
+			LEFT JOIN
+				user c ON c.user_id = a.updated_by
+			WHERE
+				a.deleted_at IS NULL`
 	rows, err := tx.QueryContext(ctx, SQL)
 	helper.PanicIfError(err)
 	defer rows.Close()
@@ -170,11 +181,11 @@ func (repository *UserRepositoryImpl) FindAll(ctx context.Context, tx *sql.Tx) [
 			&user.UserLangCode,
 			&user.UserLastLogin,
 			&user.CreatedBy,
+			&user.CreatedByName,
 			&user.CreatedAt,
 			&user.UpdatedBy,
-			&user.UpdatedAt,
-			&user.DeletedBy,
-			&user.DeletedAt)
+			&user.UpdatedByName,
+			&user.UpdatedAt)
 		helper.PanicIfError(err)
 		users = append(users, user)
 	}
@@ -191,7 +202,8 @@ func (repository *UserRepositoryImpl) FindByEmail(ctx context.Context, tx *sql.T
 			FROM 
 				user 
 			WHERE 
-				user_email = ?`
+				user_email = ?
+				AND deleted_at IS NULL`
 	rows, err := tx.QueryContext(ctx, SQL, userEmail)
 	helper.PanicIfError(err)
 	defer rows.Close()
@@ -218,7 +230,8 @@ func (repository *UserRepositoryImpl) FindByTokenRefresh(ctx context.Context, tx
 			FROM 
 				user 
 			WHERE 
-				user_token_refresh = ?`
+				user_token_refresh = ?
+				AND deleted_at IS NULL`
 	rows, err := tx.QueryContext(ctx, SQL, userTokenRefresh)
 	helper.PanicIfError(err)
 	defer rows.Close()
@@ -244,7 +257,8 @@ func (repository *UserRepositoryImpl) UpdateToken(ctx context.Context, tx *sql.T
 				user_token_refresh = ?, 
 				user_last_login = ? 
 			WHERE 
-				user_id = ?`
+				user_id = ?
+				AND deleted_at IS NULL`
 	_, err := tx.ExecContext(ctx, SQL,
 		user.UserToken,
 		user.UserTokenRefresh,
@@ -262,7 +276,8 @@ func (repository *UserRepositoryImpl) Logout(ctx context.Context, tx *sql.Tx, us
 				user_token = NULL, 
 				user_token_refresh = NULL 
 			WHERE 
-				user_id = ?`
+				user_id = ?
+				AND deleted_at IS NULL`
 	_, err := tx.ExecContext(ctx, SQL, user.UserId)
 	helper.PanicIfError(err)
 
