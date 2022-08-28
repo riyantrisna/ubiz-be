@@ -41,15 +41,21 @@ func (repository *UserRepositoryImpl) Delete(ctx context.Context, tx *sql.Tx, us
 	helper.PanicIfError(err)
 }
 
+func (repository *UserRepositoryImpl) SoftDelete(ctx context.Context, tx *sql.Tx, user domain.User) {
+	SQL := "UPDATE user SET deleted_by = ?, deleted_at = ? WHERE user_id = ?"
+	_, err := tx.ExecContext(ctx, SQL, user.DeletedBy, user.DeletedAt, user.UserId)
+	helper.PanicIfError(err)
+}
+
 func (repository *UserRepositoryImpl) FindById(ctx context.Context, tx *sql.Tx, userId int) (domain.User, error) {
-	SQL := "SELECT user_id, user_name, user_email, IFNULL(user_token,''), IFNULL(user_token_refresh,''), user_lang_code, IFNULL(user_last_login,''), IFNULL(created_by,0), IFNULL(created_at,''), IFNULL(updated_by,0), IFNULL(updated_at,'') FROM user WHERE user_id = ?"
+	SQL := "SELECT user_id, user_name, user_email, IFNULL(user_token,''), IFNULL(user_token_refresh,''), user_lang_code, IFNULL(user_last_login,''), IFNULL(created_by,0), IFNULL(created_at,''), IFNULL(updated_by,0), IFNULL(updated_at,''), IFNULL(deleted_by,0), IFNULL(deleted_at,'') FROM user WHERE user_id = ?"
 	rows, err := tx.QueryContext(ctx, SQL, userId)
 	helper.PanicIfError(err)
 	defer rows.Close()
 
 	user := domain.User{}
 	if rows.Next() {
-		err := rows.Scan(&user.UserId, &user.UserName, &user.UserEmail, &user.UserToken, &user.UserTokenRefresh, &user.UserLangCode, &user.UserLastLogin, &user.CreatedBy, &user.CreatedAt, &user.UpdatedBy, &user.UpdatedAt)
+		err := rows.Scan(&user.UserId, &user.UserName, &user.UserEmail, &user.UserToken, &user.UserTokenRefresh, &user.UserLangCode, &user.UserLastLogin, &user.CreatedBy, &user.CreatedAt, &user.UpdatedBy, &user.UpdatedAt, &user.DeletedBy, &user.DeletedAt)
 		helper.PanicIfError(err)
 	}
 
@@ -57,7 +63,7 @@ func (repository *UserRepositoryImpl) FindById(ctx context.Context, tx *sql.Tx, 
 }
 
 func (repository *UserRepositoryImpl) FindAll(ctx context.Context, tx *sql.Tx) []domain.User {
-	SQL := "SELECT user_id, user_name, user_email, IFNULL(user_token,''), IFNULL(user_token_refresh,''), user_lang_code, IFNULL(user_last_login,''), IFNULL(created_by,0), IFNULL(created_at,''), IFNULL(updated_by,0), IFNULL(updated_at,'') FROM user"
+	SQL := "SELECT user_id, user_name, user_email, IFNULL(user_token,''), IFNULL(user_token_refresh,''), user_lang_code, IFNULL(user_last_login,''), IFNULL(created_by,0), IFNULL(created_at,''), IFNULL(updated_by,0), IFNULL(updated_at,''), IFNULL(deleted_by,0), IFNULL(deleted_at,'') FROM user"
 	rows, err := tx.QueryContext(ctx, SQL)
 	helper.PanicIfError(err)
 	defer rows.Close()
@@ -65,7 +71,7 @@ func (repository *UserRepositoryImpl) FindAll(ctx context.Context, tx *sql.Tx) [
 	var users []domain.User
 	for rows.Next() {
 		user := domain.User{}
-		err := rows.Scan(&user.UserId, &user.UserName, &user.UserEmail, &user.UserToken, &user.UserTokenRefresh, &user.UserLangCode, &user.UserLastLogin, &user.CreatedBy, &user.CreatedAt, &user.UpdatedBy, &user.UpdatedAt)
+		err := rows.Scan(&user.UserId, &user.UserName, &user.UserEmail, &user.UserToken, &user.UserTokenRefresh, &user.UserLangCode, &user.UserLastLogin, &user.CreatedBy, &user.CreatedAt, &user.UpdatedBy, &user.UpdatedAt, &user.DeletedBy, &user.DeletedAt)
 		helper.PanicIfError(err)
 		users = append(users, user)
 	}

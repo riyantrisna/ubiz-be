@@ -135,29 +135,67 @@ func (controller *UserControllerImpl) Update(context *gin.Context) {
 }
 
 func (controller *UserControllerImpl) Delete(context *gin.Context) {
+	userDeleteRequest := web.UserDeleteRequest{}
+	context.Bind(&userDeleteRequest)
+
 	userId := context.Param("userId")
 	id, err := strconv.Atoi(userId)
 	helper.PanicIfError(err)
 
-	userResponse := controller.UserService.Delete(context.Request.Context(), id)
+	if userDeleteRequest.IsSoftDelete {
+		userDeleteRequest.UserId = id
 
-	if userResponse.UserId != 0 {
-		webResponse := helper.WebResponse{
-			Code:   200,
-			Status: "Success delete user",
+		value, ok := context.Get("user_id")
+		if ok {
+			userDeleteRequest.DeletedBy = value.(int)
+		} else {
+			userDeleteRequest.DeletedBy = 0
 		}
 
-		context.Writer.Header().Add("Content-Type", "application/json")
-		context.JSON(200, webResponse)
+		currentTime := time.Now()
+		userDeleteRequest.DeletedAt = currentTime.Format("2006-01-02 15:04:05")
+
+		userResponse := controller.UserService.SoftDelete(context.Request.Context(), userDeleteRequest)
+
+		if userResponse.UserId != 0 {
+			webResponse := helper.WebResponse{
+				Code:   200,
+				Status: "Success delete user",
+			}
+
+			context.Writer.Header().Add("Content-Type", "application/json")
+			context.JSON(200, webResponse)
+		} else {
+			webResponse := helper.WebResponse{
+				Code:   http.StatusNotFound,
+				Status: "Data not found",
+				Data:   nil,
+			}
+
+			context.Writer.Header().Add("Content-Type", "application/json")
+			context.JSON(http.StatusNotFound, webResponse)
+		}
 	} else {
-		webResponse := helper.WebResponse{
-			Code:   http.StatusNotFound,
-			Status: "Data not found",
-			Data:   nil,
-		}
+		userResponse := controller.UserService.Delete(context.Request.Context(), id)
 
-		context.Writer.Header().Add("Content-Type", "application/json")
-		context.JSON(http.StatusNotFound, webResponse)
+		if userResponse.UserId != 0 {
+			webResponse := helper.WebResponse{
+				Code:   200,
+				Status: "Success delete user",
+			}
+
+			context.Writer.Header().Add("Content-Type", "application/json")
+			context.JSON(200, webResponse)
+		} else {
+			webResponse := helper.WebResponse{
+				Code:   http.StatusNotFound,
+				Status: "Data not found",
+				Data:   nil,
+			}
+
+			context.Writer.Header().Add("Content-Type", "application/json")
+			context.JSON(http.StatusNotFound, webResponse)
+		}
 	}
 }
 

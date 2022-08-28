@@ -21,6 +21,13 @@ type UserUpdateRequest struct {
 	UpdatedAt    string `validate:"required"`
 }
 
+type UserDeleteRequest struct {
+	UserId       int    `validate:"required"`
+	DeletedBy    int    `validate:"required"`
+	DeletedAt    string `validate:"required"`
+	IsSoftDelete bool   `validate:"required" json:"is_soft_delete"`
+}
+
 type UserLoginRequest struct {
 	UserEmail    string `validate:"required,min=1,email" json:"email"`
 	UserPassword string `validate:"required,min=1" json:"password"`

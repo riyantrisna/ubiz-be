@@ -74,6 +74,23 @@ func (service *UserServiceImpl) Delete(ctx context.Context, userId int) web.User
 	return web.ToUserResponse(userData)
 }
 
+func (service *UserServiceImpl) SoftDelete(ctx context.Context, request web.UserDeleteRequest) web.UserResponse {
+	tx, err := service.DB.Begin()
+	helper.PanicIfError(err)
+	defer helper.CommitOrRollback(tx)
+
+	userData, err := service.UserRepository.FindById(ctx, tx, request.UserId)
+	if err == nil {
+		userData.UserId = request.UserId
+		userData.DeletedBy = request.DeletedBy
+		userData.DeletedAt = request.DeletedAt
+
+		service.UserRepository.SoftDelete(ctx, tx, userData)
+	}
+
+	return web.ToUserResponse(userData)
+}
+
 func (service *UserServiceImpl) FindById(ctx context.Context, userId int) web.UserResponse {
 	tx, err := service.DB.Begin()
 	helper.PanicIfError(err)

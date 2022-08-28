@@ -15,4 +15,7 @@ type User struct {
 	UpdatedBy        int
 	UpdatedByName    string
 	UpdatedAt        string
+	DeletedBy        int
+	DeletedByName    string
+	DeletedAt        string
 }
