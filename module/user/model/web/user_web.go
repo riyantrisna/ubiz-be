@@ -1,6 +1,8 @@
 package web
 
-import "collapp/module/user/model/domain"
+import (
+	"collapp/module/user/model/domain"
+)
 
 // request
 type UserCreateRequest struct {
@@ -55,6 +57,9 @@ type UserResponse struct {
 	UpdatedBy        int    `json:"updated_by"`
 	UpdatedByName    string `json:"updated_by_name"`
 	UpdatedAt        string `json:"updated_at"`
+	DeletedBy        int    `json:"deleted_by"`
+	DeletedByName    string `json:"deleted_by_name"`
+	DeletedAt        string `json:"deleted_at"`
 }
 
 func ToUserResponse(user domain.User) UserResponse {
@@ -72,6 +77,9 @@ func ToUserResponse(user domain.User) UserResponse {
 		UpdatedBy:        user.UpdatedBy,
 		UpdatedByName:    user.UpdatedByName,
 		UpdatedAt:        user.UpdatedAt,
+		DeletedBy:        user.DeletedBy,
+		DeletedByName:    user.DeletedByName,
+		DeletedAt:        user.DeletedAt,
 	}
 }
 
