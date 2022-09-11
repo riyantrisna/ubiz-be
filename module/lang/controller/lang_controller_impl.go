@@ -2,7 +2,7 @@ package controller
 
 import (
 	"collapp/helper"
-	"collapp/module/lang/model/web"
+	"collapp/module/lang/model"
 	"collapp/module/lang/service"
 	"database/sql"
 	"fmt"
@@ -29,7 +29,7 @@ func NewLangController(db *sql.DB) LangController {
 }
 
 func (controller *LangControllerImpl) Create(context *gin.Context) {
-	langCreateRequest := web.LangCreateRequest{}
+	langCreateRequest := model.LangCreateRequest{}
 	context.Bind(&langCreateRequest)
 
 	value, ok := context.Get("user_id")
@@ -67,7 +67,7 @@ func (controller *LangControllerImpl) Create(context *gin.Context) {
 }
 
 func (controller *LangControllerImpl) Update(context *gin.Context) {
-	langUpdateRequest := web.LangUpdateRequest{}
+	langUpdateRequest := model.LangUpdateRequest{}
 	context.Bind(&langUpdateRequest)
 
 	value, ok := context.Get("user_id")
