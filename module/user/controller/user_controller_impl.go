@@ -3,8 +3,7 @@ package controller
 import (
 	"collapp/helper"
 	"collapp/middleware"
-	"collapp/module/user/model/domain"
-	"collapp/module/user/model/web"
+	"collapp/module/user/model"
 	"collapp/module/user/service"
 	"database/sql"
 	"net/http"
@@ -17,9 +16,6 @@ import (
 	"github.com/spf13/viper"
 	"golang.org/x/crypto/bcrypt"
 )
-
-var password = []byte(viper.GetString(`defaultPassword`))
-var jwtKey = []byte(viper.GetString(`jwt.key`))
 
 type UserControllerImpl struct {
 	UserService service.UserService
@@ -36,7 +32,9 @@ func NewUserController(db *sql.DB) UserController {
 }
 
 func (controller *UserControllerImpl) Create(context *gin.Context) {
-	userCreateRequest := web.UserCreateRequest{}
+	password := []byte(viper.GetString("defaultPassword"))
+
+	userCreateRequest := model.UserCreateRequest{}
 	context.Bind(&userCreateRequest)
 
 	value, ok := context.Get("user_id")
@@ -79,7 +77,7 @@ func (controller *UserControllerImpl) Create(context *gin.Context) {
 }
 
 func (controller *UserControllerImpl) Update(context *gin.Context) {
-	userUpdateRequest := web.UserUpdateRequest{}
+	userUpdateRequest := model.UserUpdateRequest{}
 	context.Bind(&userUpdateRequest)
 
 	value, ok := context.Get("user_id")
@@ -135,7 +133,7 @@ func (controller *UserControllerImpl) Update(context *gin.Context) {
 }
 
 func (controller *UserControllerImpl) Delete(context *gin.Context) {
-	userDeleteRequest := web.UserDeleteRequest{}
+	userDeleteRequest := model.UserDeleteRequest{}
 	context.Bind(&userDeleteRequest)
 
 	userId := context.Param("userId")
@@ -252,12 +250,24 @@ func (controller *UserControllerImpl) FindAll(context *gin.Context) {
 }
 
 func (controller *UserControllerImpl) Login(context *gin.Context) {
+	jwtKey := []byte(viper.GetString(`jwt.key`))
+
 	currentTime := time.Now()
-	userLoginRequest := web.UserLoginRequest{}
+	userLoginRequest := model.UserLoginRequest{}
 	context.Bind(&userLoginRequest)
 
 	err := controller.Validate.Struct(userLoginRequest)
-	helper.PanicIfError(err)
+	if err != nil {
+		webResponse := helper.WebResponse{
+			Code:   http.StatusBadRequest,
+			Status: "Bad Request",
+			Data:   err.Error(),
+		}
+
+		context.Writer.Header().Add("Content-Type", "application/json")
+		context.JSON(http.StatusBadRequest, webResponse)
+		return
+	}
 
 	userCheck := controller.UserService.FindByEmail(context.Request.Context(), userLoginRequest.UserEmail)
 
@@ -324,7 +334,7 @@ func (controller *UserControllerImpl) Login(context *gin.Context) {
 		userResponse.UserToken = tokenString
 		userResponse.UserTokenRefresh = tokenStringRefresh
 
-		userData := domain.User{}
+		userData := model.UserUpdateTokenRequest{}
 
 		userData.UserId = userResponse.UserId
 		userData.UserToken = tokenString
@@ -363,6 +373,8 @@ func (controller *UserControllerImpl) Login(context *gin.Context) {
 }
 
 func (controller *UserControllerImpl) RefreshToken(context *gin.Context) {
+	jwtKey := []byte(viper.GetString(`jwt.key`))
+
 	currentTime := time.Now()
 	userRefreshToken := context.Param("userRefreshToken")
 
@@ -446,7 +458,7 @@ func (controller *UserControllerImpl) RefreshToken(context *gin.Context) {
 		userResponse.UserToken = tokenString
 		userResponse.UserTokenRefresh = tokenStringRefresh
 
-		userData := domain.User{}
+		userData := model.UserUpdateTokenRequest{}
 
 		userData.UserId = userResponse.UserId
 		userData.UserToken = tokenString

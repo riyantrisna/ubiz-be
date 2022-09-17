@@ -1,6 +1,36 @@
 package model
 
-import "collapp/module/user/model/domain"
+import "database/sql"
+
+// model User
+type User struct {
+	UserId                int
+	UserName              string
+	UserEmail             string
+	UserPassword          string
+	UserToken             string
+	UserTokenCheck        sql.NullString
+	UserTokenRefresh      string
+	UserTokenRefreshCheck sql.NullString
+	UserLangCode          string
+	UserLastLogin         string
+	UserLastLoginCheck    sql.NullString
+	CreatedBy             int
+	CreatedByCheck        sql.NullInt32
+	CreatedByName         string
+	CreatedByNameCheck    sql.NullString
+	CreatedAt             string
+	CreatedAtCheck        sql.NullString
+	UpdatedBy             int
+	UpdatedByCheck        sql.NullInt32
+	UpdatedByName         string
+	UpdatedByNameCheck    sql.NullString
+	UpdatedAt             string
+	UpdatedAtCheck        sql.NullString
+	DeletedBy             int
+	DeletedByName         string
+	DeletedAt             string
+}
 
 // request
 type UserCreateRequest struct {
@@ -33,6 +63,13 @@ type UserLoginRequest struct {
 	UserPassword string `validate:"required,min=1" json:"password"`
 }
 
+type UserUpdateTokenRequest struct {
+	UserId           int    `validate:"required"`
+	UserToken        string `validate:"required"`
+	UserTokenRefresh string `validate:"required"`
+	UserLastLogin    string `validate:"required"`
+}
+
 // rersponse
 type UserLoginResponse struct {
 	UserId       int    `json:"user_id"`
@@ -57,7 +94,7 @@ type UserResponse struct {
 	UpdatedAt        string `json:"updated_at"`
 }
 
-func ToUserResponse(user domain.User) UserResponse {
+func ToUserResponse(user User) UserResponse {
 	return UserResponse{
 		UserId:           user.UserId,
 		UserName:         user.UserName,
@@ -75,7 +112,7 @@ func ToUserResponse(user domain.User) UserResponse {
 	}
 }
 
-func ToUserResponses(users []domain.User) []UserResponse {
+func ToUserResponses(users []User) []UserResponse {
 	var userResponses []UserResponse
 	for _, user := range users {
 		userResponses = append(userResponses, ToUserResponse(user))
@@ -83,7 +120,7 @@ func ToUserResponses(users []domain.User) []UserResponse {
 	return userResponses
 }
 
-func ToUserLoginResponse(user domain.User) UserLoginResponse {
+func ToUserLoginResponse(user User) UserLoginResponse {
 	return UserLoginResponse{
 		UserId:       user.UserId,
 		UserPassword: user.UserPassword,

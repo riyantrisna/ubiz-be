@@ -2,7 +2,7 @@ package repository
 
 import (
 	"collapp/helper"
-	"collapp/module/user/model/domain"
+	"collapp/module/user/model"
 	"context"
 	"database/sql"
 )
@@ -14,7 +14,7 @@ func NewUserRepository() UserRepository {
 	return &UserRepositoryImpl{}
 }
 
-func (repository *UserRepositoryImpl) Save(ctx context.Context, tx *sql.Tx, user domain.User) domain.User {
+func (repository *UserRepositoryImpl) Save(ctx context.Context, tx *sql.Tx, user model.UserCreateRequest) model.User {
 
 	SQL := `INSERT INTO user
 			(
@@ -44,11 +44,12 @@ func (repository *UserRepositoryImpl) Save(ctx context.Context, tx *sql.Tx, user
 	id, err := result.LastInsertId()
 	helper.PanicIfError(err)
 
-	user.UserId = int(id)
-	return user
+	res := model.User{}
+	res.UserId = int(id)
+	return res
 }
 
-func (repository *UserRepositoryImpl) Update(ctx context.Context, tx *sql.Tx, user domain.User) domain.User {
+func (repository *UserRepositoryImpl) Update(ctx context.Context, tx *sql.Tx, user model.UserUpdateRequest) model.User {
 	SQL := `UPDATE 
 				user 
 			SET 
@@ -68,16 +69,18 @@ func (repository *UserRepositoryImpl) Update(ctx context.Context, tx *sql.Tx, us
 		user.UserId)
 	helper.PanicIfError(err)
 
-	return user
+	res := model.User{}
+	res.UserId = user.UserId
+	return res
 }
 
-func (repository *UserRepositoryImpl) Delete(ctx context.Context, tx *sql.Tx, user domain.User) {
+func (repository *UserRepositoryImpl) Delete(ctx context.Context, tx *sql.Tx, user model.User) {
 	SQL := `DELETE FROM user WHERE user_id = ?`
 	_, err := tx.ExecContext(ctx, SQL, user.UserId)
 	helper.PanicIfError(err)
 }
 
-func (repository *UserRepositoryImpl) SoftDelete(ctx context.Context, tx *sql.Tx, user domain.User) {
+func (repository *UserRepositoryImpl) SoftDelete(ctx context.Context, tx *sql.Tx, user model.User) {
 	SQL := `UPDATE 
 				user 
 			SET 
@@ -92,21 +95,21 @@ func (repository *UserRepositoryImpl) SoftDelete(ctx context.Context, tx *sql.Tx
 	helper.PanicIfError(err)
 }
 
-func (repository *UserRepositoryImpl) FindById(ctx context.Context, tx *sql.Tx, userId int) (domain.User, error) {
+func (repository *UserRepositoryImpl) FindById(ctx context.Context, tx *sql.Tx, userId int) (model.User, error) {
 	SQL := `SELECT 
 				a.user_id, 
 				a.user_name, 
 				a.user_email, 
-				IFNULL(a.user_token,''), 
-				IFNULL(a.user_token_refresh,''), 
+				a.user_token, 
+				a.user_token_refresh, 
 				a.user_lang_code, 
-				IFNULL(a.user_last_login,''), 
-				IFNULL(a.created_by,0), 
-				IFNULL(b.user_name,''),
-				IFNULL(a.created_at,''), 
-				IFNULL(a.updated_by,0), 
-				IFNULL(c.user_name,''),
-				IFNULL(a.updated_at,'')
+				a.user_last_login, 
+				a.created_by, 
+				b.user_name,
+				a.created_at, 
+				a.updated_by,
+				c.user_name,
+				a.updated_at
 			FROM 
 				user a 
 			LEFT JOIN
@@ -120,43 +123,71 @@ func (repository *UserRepositoryImpl) FindById(ctx context.Context, tx *sql.Tx, 
 	helper.PanicIfError(err)
 	defer rows.Close()
 
-	user := domain.User{}
+	user := model.User{}
 	if rows.Next() {
 		err := rows.Scan(
 			&user.UserId,
 			&user.UserName,
 			&user.UserEmail,
-			&user.UserToken,
-			&user.UserTokenRefresh,
+			&user.UserTokenCheck,
+			&user.UserTokenRefreshCheck,
 			&user.UserLangCode,
-			&user.UserLastLogin,
-			&user.CreatedBy,
-			&user.CreatedByName,
-			&user.CreatedAt,
-			&user.UpdatedBy,
-			&user.UpdatedByName,
-			&user.UpdatedAt)
+			&user.UserLastLoginCheck,
+			&user.CreatedByCheck,
+			&user.CreatedByNameCheck,
+			&user.CreatedAtCheck,
+			&user.UpdatedByCheck,
+			&user.UpdatedByNameCheck,
+			&user.UpdatedAtCheck)
 		helper.PanicIfError(err)
+	}
+
+	if user.UserTokenCheck.Valid {
+		user.UserToken = user.UserTokenCheck.String
+	}
+	if user.UserTokenRefreshCheck.Valid {
+		user.UserTokenRefresh = user.UserTokenRefreshCheck.String
+	}
+	if user.UserLastLoginCheck.Valid {
+		user.UserLastLogin = user.UserLastLoginCheck.String
+	}
+	if user.CreatedByCheck.Valid {
+		user.CreatedBy = int(user.CreatedByCheck.Int32)
+	}
+	if user.CreatedByNameCheck.Valid {
+		user.CreatedByName = user.CreatedByNameCheck.String
+	}
+	if user.CreatedAtCheck.Valid {
+		user.CreatedAt = user.CreatedAtCheck.String
+	}
+	if user.UpdatedByCheck.Valid {
+		user.UpdatedBy = int(user.UpdatedByCheck.Int32)
+	}
+	if user.UpdatedByNameCheck.Valid {
+		user.UpdatedByName = user.UpdatedByNameCheck.String
+	}
+	if user.UpdatedAtCheck.Valid {
+		user.UpdatedAt = user.UpdatedAtCheck.String
 	}
 
 	return user, nil
 }
 
-func (repository *UserRepositoryImpl) FindAll(ctx context.Context, tx *sql.Tx) []domain.User {
+func (repository *UserRepositoryImpl) FindAll(ctx context.Context, tx *sql.Tx) []model.User {
 	SQL := `SELECT 
 				a.user_id, 
 				a.user_name, 
 				a.user_email, 
-				IFNULL(a.user_token,''), 
-				IFNULL(a.user_token_refresh,''), 
+				a.user_token, 
+				a.user_token_refresh, 
 				a.user_lang_code, 
-				IFNULL(a.user_last_login,''), 
-				IFNULL(a.created_by,0), 
-				IFNULL(b.user_name,''),
-				IFNULL(a.created_at,''), 
-				IFNULL(a.updated_by,0), 
-				IFNULL(c.user_name,''),
-				IFNULL(a.updated_at,'')
+				a.user_last_login, 
+				a.created_by,
+				b.user_name,
+				a.created_at, 
+				a.updated_by,
+				c.user_name,
+				a.updated_at
 			FROM 
 				user a
 			LEFT JOIN
@@ -169,31 +200,60 @@ func (repository *UserRepositoryImpl) FindAll(ctx context.Context, tx *sql.Tx) [
 	helper.PanicIfError(err)
 	defer rows.Close()
 
-	var users []domain.User
+	var users []model.User
 	for rows.Next() {
-		user := domain.User{}
+		user := model.User{}
 		err := rows.Scan(
 			&user.UserId,
 			&user.UserName,
 			&user.UserEmail,
-			&user.UserToken,
-			&user.UserTokenRefresh,
+			&user.UserTokenCheck,
+			&user.UserTokenRefreshCheck,
 			&user.UserLangCode,
-			&user.UserLastLogin,
-			&user.CreatedBy,
-			&user.CreatedByName,
-			&user.CreatedAt,
-			&user.UpdatedBy,
-			&user.UpdatedByName,
-			&user.UpdatedAt)
+			&user.UserLastLoginCheck,
+			&user.CreatedByCheck,
+			&user.CreatedByNameCheck,
+			&user.CreatedAtCheck,
+			&user.UpdatedByCheck,
+			&user.UpdatedByNameCheck,
+			&user.UpdatedAtCheck)
 		helper.PanicIfError(err)
+
+		if user.UserTokenCheck.Valid {
+			user.UserToken = user.UserTokenCheck.String
+		}
+		if user.UserTokenRefreshCheck.Valid {
+			user.UserTokenRefresh = user.UserTokenRefreshCheck.String
+		}
+		if user.UserLastLoginCheck.Valid {
+			user.UserLastLogin = user.UserLastLoginCheck.String
+		}
+		if user.CreatedByCheck.Valid {
+			user.CreatedBy = int(user.CreatedByCheck.Int32)
+		}
+		if user.CreatedByNameCheck.Valid {
+			user.CreatedByName = user.CreatedByNameCheck.String
+		}
+		if user.CreatedAtCheck.Valid {
+			user.CreatedAt = user.CreatedAtCheck.String
+		}
+		if user.UpdatedByCheck.Valid {
+			user.UpdatedBy = int(user.UpdatedByCheck.Int32)
+		}
+		if user.UpdatedByNameCheck.Valid {
+			user.UpdatedByName = user.UpdatedByNameCheck.String
+		}
+		if user.UpdatedAtCheck.Valid {
+			user.UpdatedAt = user.UpdatedAtCheck.String
+		}
+
 		users = append(users, user)
 	}
 
 	return users
 }
 
-func (repository *UserRepositoryImpl) FindByEmail(ctx context.Context, tx *sql.Tx, userEmail string) (domain.User, error) {
+func (repository *UserRepositoryImpl) FindByEmail(ctx context.Context, tx *sql.Tx, userEmail string) (model.User, error) {
 	SQL := `SELECT 
 				user_id, 
 				user_name, 
@@ -208,7 +268,7 @@ func (repository *UserRepositoryImpl) FindByEmail(ctx context.Context, tx *sql.T
 	helper.PanicIfError(err)
 	defer rows.Close()
 
-	user := domain.User{}
+	user := model.User{}
 	if rows.Next() {
 		err := rows.Scan(
 			&user.UserId,
@@ -221,7 +281,7 @@ func (repository *UserRepositoryImpl) FindByEmail(ctx context.Context, tx *sql.T
 	return user, nil
 }
 
-func (repository *UserRepositoryImpl) FindByTokenRefresh(ctx context.Context, tx *sql.Tx, userTokenRefresh string) (domain.User, error) {
+func (repository *UserRepositoryImpl) FindByTokenRefresh(ctx context.Context, tx *sql.Tx, userTokenRefresh string) (model.User, error) {
 	SQL := `SELECT 
 				user_id, 
 				user_name, 
@@ -236,7 +296,7 @@ func (repository *UserRepositoryImpl) FindByTokenRefresh(ctx context.Context, tx
 	helper.PanicIfError(err)
 	defer rows.Close()
 
-	user := domain.User{}
+	user := model.User{}
 	if rows.Next() {
 		err := rows.Scan(
 			&user.UserId,
@@ -249,7 +309,7 @@ func (repository *UserRepositoryImpl) FindByTokenRefresh(ctx context.Context, tx
 	return user, nil
 }
 
-func (repository *UserRepositoryImpl) UpdateToken(ctx context.Context, tx *sql.Tx, user domain.User) domain.User {
+func (repository *UserRepositoryImpl) UpdateToken(ctx context.Context, tx *sql.Tx, user model.User) model.User {
 	SQL := `UPDATE 
 				user 
 			SET 
@@ -269,7 +329,7 @@ func (repository *UserRepositoryImpl) UpdateToken(ctx context.Context, tx *sql.T
 	return user
 }
 
-func (repository *UserRepositoryImpl) Logout(ctx context.Context, tx *sql.Tx, user domain.User) domain.User {
+func (repository *UserRepositoryImpl) Logout(ctx context.Context, tx *sql.Tx, user model.User) model.User {
 	SQL := `UPDATE 
 				user 
 			SET 
