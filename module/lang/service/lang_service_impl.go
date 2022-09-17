@@ -33,9 +33,9 @@ func (service *LangServiceImpl) Create(ctx context.Context, request model.LangCr
 		helper.PanicIfError(err)
 
 		return model.ToLangResponse(langData)
+	} else {
+		return model.ToLangResponse(langData)
 	}
-
-	return model.ToLangResponse(langData)
 }
 
 func (service *LangServiceImpl) Update(ctx context.Context, request model.LangUpdateRequest) model.LangResponse {

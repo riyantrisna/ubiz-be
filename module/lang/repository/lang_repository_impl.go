@@ -14,7 +14,7 @@ func NewLangRepository() LangRepository {
 	return &LangRepositoryImpl{}
 }
 
-func (repository *LangRepositoryImpl) Save(ctx context.Context, tx *sql.Tx, lang model.LangCreateRequest) model.LangResponse {
+func (repository *LangRepositoryImpl) Save(ctx context.Context, tx *sql.Tx, lang model.LangCreateRequest) model.Lang {
 
 	SQL := `INSERT INTO lang
 			(
@@ -38,12 +38,12 @@ func (repository *LangRepositoryImpl) Save(ctx context.Context, tx *sql.Tx, lang
 	id, err := result.LastInsertId()
 	helper.PanicIfError(err)
 
-	res := model.LangResponse{}
+	res := model.Lang{}
 	res.LangId = int(id)
 	return res
 }
 
-func (repository *LangRepositoryImpl) Update(ctx context.Context, tx *sql.Tx, lang model.LangUpdateRequest) model.LangResponse {
+func (repository *LangRepositoryImpl) Update(ctx context.Context, tx *sql.Tx, lang model.LangUpdateRequest) model.Lang {
 	SQL := `UPDATE 
 				lang 
 			SET 
@@ -61,18 +61,18 @@ func (repository *LangRepositoryImpl) Update(ctx context.Context, tx *sql.Tx, la
 		lang.LangId)
 	helper.PanicIfError(err)
 
-	res := model.LangResponse{}
+	res := model.Lang{}
 	res.LangId = lang.LangId
 	return res
 }
 
-func (repository *LangRepositoryImpl) Delete(ctx context.Context, tx *sql.Tx, lang model.LangResponse) {
+func (repository *LangRepositoryImpl) Delete(ctx context.Context, tx *sql.Tx, lang model.Lang) {
 	SQL := `DELETE FROM lang WHERE lang_id = ?`
 	_, err := tx.ExecContext(ctx, SQL, lang.LangId)
 	helper.PanicIfError(err)
 }
 
-func (repository *LangRepositoryImpl) FindById(ctx context.Context, tx *sql.Tx, langId int) (model.LangResponse, error) {
+func (repository *LangRepositoryImpl) FindById(ctx context.Context, tx *sql.Tx, langId int) (model.Lang, error) {
 	SQL := `SELECT 
 				lang_id, 
 				lang_code, 
@@ -89,7 +89,7 @@ func (repository *LangRepositoryImpl) FindById(ctx context.Context, tx *sql.Tx, 
 	helper.PanicIfError(err)
 	defer rows.Close()
 
-	lang := model.LangResponse{}
+	lang := model.Lang{}
 	if rows.Next() {
 		err := rows.Scan(
 			&lang.LangId,
@@ -118,7 +118,7 @@ func (repository *LangRepositoryImpl) FindById(ctx context.Context, tx *sql.Tx, 
 	return lang, nil
 }
 
-func (repository *LangRepositoryImpl) FindAll(ctx context.Context, tx *sql.Tx) []model.LangResponse {
+func (repository *LangRepositoryImpl) FindAll(ctx context.Context, tx *sql.Tx) []model.Lang {
 	SQL := `SELECT 
 				lang_id, 
 				lang_code, 
@@ -133,9 +133,9 @@ func (repository *LangRepositoryImpl) FindAll(ctx context.Context, tx *sql.Tx) [
 	helper.PanicIfError(err)
 	defer rows.Close()
 
-	var langs []model.LangResponse
+	var langs []model.Lang
 	for rows.Next() {
-		lang := model.LangResponse{}
+		lang := model.Lang{}
 		err := rows.Scan(
 			&lang.LangId,
 			&lang.LangCode,

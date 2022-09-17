@@ -2,6 +2,21 @@ package model
 
 import "database/sql"
 
+// model Language
+type Lang struct {
+	LangId         int
+	LangCode       string
+	LangName       string
+	CreatedBy      int
+	CreatedByCheck sql.NullInt32
+	CreatedAt      string
+	CreatedAtCheck sql.NullString
+	UpdatedBy      int
+	UpdatedByCheck sql.NullInt32
+	UpdatedAt      string
+	UpdatedAtCheck sql.NullString
+}
+
 // request
 type LangCreateRequest struct {
 	LangCode  string `validate:"required,min=1,max=5" json:"lang_code"`
@@ -20,20 +35,16 @@ type LangUpdateRequest struct {
 
 // rersponse
 type LangResponse struct {
-	LangId         int            `json:"lang_id"`
-	LangCode       string         `json:"lang_code"`
-	LangName       string         `json:"lang_name"`
-	CreatedBy      int            `json:"created_by"`
-	CreatedByCheck sql.NullInt32  `json:"-"`
-	CreatedAt      string         `json:"created_at"`
-	CreatedAtCheck sql.NullString `json:"-"`
-	UpdatedBy      int            `json:"updated_by"`
-	UpdatedByCheck sql.NullInt32  `json:"-"`
-	UpdatedAt      string         `json:"updated_at"`
-	UpdatedAtCheck sql.NullString `json:"-"`
+	LangId    int    `json:"lang_id"`
+	LangCode  string `json:"lang_code"`
+	LangName  string `json:"lang_name"`
+	CreatedBy int    `json:"created_by"`
+	CreatedAt string `json:"created_at"`
+	UpdatedBy int    `json:"updated_by"`
+	UpdatedAt string `json:"updated_at"`
 }
 
-func ToLangResponse(lang LangResponse) LangResponse {
+func ToLangResponse(lang Lang) LangResponse {
 	return LangResponse{
 		LangId:    lang.LangId,
 		LangCode:  lang.LangCode,
@@ -45,7 +56,7 @@ func ToLangResponse(lang LangResponse) LangResponse {
 	}
 }
 
-func ToLangResponses(langs []LangResponse) []LangResponse {
+func ToLangResponses(langs []Lang) []LangResponse {
 	var langResponses []LangResponse
 	for _, lang := range langs {
 		langResponses = append(langResponses, ToLangResponse(lang))
