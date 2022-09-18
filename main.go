@@ -4,6 +4,7 @@ import (
 	"collapp/app"
 	"collapp/middleware"
 	"collapp/module/lang"
+	"collapp/module/translation"
 	"collapp/module/user"
 
 	"github.com/gin-gonic/gin"
@@ -26,6 +27,7 @@ func main() {
 
 	user.Router(db, api)
 	lang.Router(db, api)
+	translation.Router(db, api)
 
 	appPort := viper.GetString("address")
 	if appPort == "" {

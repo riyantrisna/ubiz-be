@@ -12,8 +12,6 @@ import (
 	"github.com/spf13/viper"
 )
 
-var jwtKey = []byte(viper.GetString(`jwt.key`))
-
 type Claims struct {
 	UserId       int    `json:"user_id"`
 	UserName     string `json:"user_name"`
@@ -24,6 +22,8 @@ type Claims struct {
 
 func Auth(db *sql.DB) gin.HandlerFunc {
 	return func(context *gin.Context) {
+		jwtKey := []byte(viper.GetString(`jwt.key`))
+
 		reqToken := context.Request.Header.Get("Authorization")
 		if reqToken == "" {
 			webResponse := helper.WebResponse{
