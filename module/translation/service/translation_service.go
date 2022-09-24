@@ -11,4 +11,5 @@ type TranslationService interface {
 	Delete(ctx context.Context, translationId int) model.TranslationResponse
 	FindById(ctx context.Context, translationId int) model.TranslationResponse
 	FindAll(ctx context.Context) []model.TranslationResponse
+	Translation(ctx context.Context, key string, langCode string) string
 }

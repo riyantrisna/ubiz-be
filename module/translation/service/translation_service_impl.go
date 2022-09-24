@@ -6,7 +6,6 @@ import (
 	"collapp/module/translation/repository"
 	"context"
 	"database/sql"
-	"fmt"
 )
 
 type TranslationServiceImpl struct {
@@ -117,8 +116,6 @@ func (service *TranslationServiceImpl) FindById(ctx context.Context, translation
 	translationData, _ := service.TranslationRepository.FindById(ctx, tx, translationId)
 	translationData.TranslationText = service.TranslationRepository.TextFindById(ctx, tx, translationId)
 
-	fmt.Println(translationData.TranslationText)
-
 	return model.ToTranslationResponse(translationData)
 }
 
@@ -134,4 +131,14 @@ func (service *TranslationServiceImpl) FindAll(ctx context.Context) []model.Tran
 	}
 
 	return model.ToTranslationResponses(translationsData)
+}
+
+func (service *TranslationServiceImpl) Translation(ctx context.Context, key string, langCode string) string {
+	tx, err := service.DB.Begin()
+	helper.PanicIfError(err)
+	defer helper.CommitOrRollback(tx)
+
+	translation := service.TranslationRepository.Translation(ctx, tx, key, langCode)
+
+	return translation
 }

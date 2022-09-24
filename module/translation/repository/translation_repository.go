@@ -15,4 +15,5 @@ type TranslationRepository interface {
 	FindById(ctx context.Context, tx *sql.Tx, translationId int) (model.Translation, error)
 	TextFindById(ctx context.Context, tx *sql.Tx, translationId int) []model.TranslationText
 	FindAll(ctx context.Context, tx *sql.Tx) []model.Translation
+	Translation(ctx context.Context, tx *sql.Tx, key string, langCode string) string
 }

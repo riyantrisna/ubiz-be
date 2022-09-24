@@ -4,6 +4,7 @@ import (
 	"collapp/helper"
 	"collapp/module/lang/model"
 	"collapp/module/lang/service"
+	translationService "collapp/module/translation/service"
 	"database/sql"
 	"fmt"
 	"net/http"
@@ -15,22 +16,28 @@ import (
 )
 
 type LangControllerImpl struct {
-	LangService service.LangService
-	Validate    *validator.Validate
+	LangService        service.LangService
+	Validate           *validator.Validate
+	TranslationService translationService.TranslationService
 }
 
 func NewLangController(db *sql.DB) LangController {
 	validate := validator.New()
 	langService := service.NewLangService(db)
+	translationService := translationService.NewTranslationService(db)
 	return &LangControllerImpl{
-		LangService: langService,
-		Validate:    validate,
+		LangService:        langService,
+		Validate:           validate,
+		TranslationService: translationService,
 	}
 }
 
 func (controller *LangControllerImpl) Create(context *gin.Context) {
 	langCreateRequest := model.LangCreateRequest{}
 	context.Bind(&langCreateRequest)
+
+	value, _ := context.Get("user_lang_code")
+	user_lang_code := value.(string)
 
 	value, ok := context.Get("user_id")
 	if ok {
@@ -46,7 +53,7 @@ func (controller *LangControllerImpl) Create(context *gin.Context) {
 	if err != nil {
 		webResponse := helper.WebResponse{
 			Code:   http.StatusBadRequest,
-			Status: "Bad Request",
+			Status: controller.TranslationService.Translation(context, "bad_request", user_lang_code),
 			Data:   err.Error(),
 		}
 
@@ -55,10 +62,10 @@ func (controller *LangControllerImpl) Create(context *gin.Context) {
 		return
 	}
 
-	langResponse := controller.LangService.Create(context.Request.Context(), langCreateRequest)
+	langResponse := controller.LangService.Create(context, langCreateRequest)
 	webResponse := helper.WebResponse{
 		Code:   200,
-		Status: "Success create language",
+		Status: controller.TranslationService.Translation(context, "success_create_language", user_lang_code),
 		Data:   langResponse,
 	}
 
@@ -69,6 +76,9 @@ func (controller *LangControllerImpl) Create(context *gin.Context) {
 func (controller *LangControllerImpl) Update(context *gin.Context) {
 	langUpdateRequest := model.LangUpdateRequest{}
 	context.Bind(&langUpdateRequest)
+
+	value, _ := context.Get("user_lang_code")
+	user_lang_code := value.(string)
 
 	value, ok := context.Get("user_id")
 	if ok {
@@ -90,7 +100,7 @@ func (controller *LangControllerImpl) Update(context *gin.Context) {
 	if err != nil {
 		webResponse := helper.WebResponse{
 			Code:   http.StatusBadRequest,
-			Status: "Bad Request",
+			Status: controller.TranslationService.Translation(context, "bad_request", user_lang_code),
 			Data:   err.Error(),
 		}
 
@@ -101,12 +111,12 @@ func (controller *LangControllerImpl) Update(context *gin.Context) {
 
 	fmt.Println(langUpdateRequest)
 
-	langResponse := controller.LangService.Update(context.Request.Context(), langUpdateRequest)
+	langResponse := controller.LangService.Update(context, langUpdateRequest)
 
 	if langResponse.LangId != 0 {
 		webResponse := helper.WebResponse{
 			Code:   200,
-			Status: "Success update language",
+			Status: controller.TranslationService.Translation(context, "success_update_language", user_lang_code),
 			Data:   langResponse,
 		}
 
@@ -115,7 +125,7 @@ func (controller *LangControllerImpl) Update(context *gin.Context) {
 	} else {
 		webResponse := helper.WebResponse{
 			Code:   http.StatusNotFound,
-			Status: "Data not found",
+			Status: controller.TranslationService.Translation(context, "data_not_found", user_lang_code),
 			Data:   nil,
 		}
 
@@ -129,12 +139,15 @@ func (controller *LangControllerImpl) Delete(context *gin.Context) {
 	id, err := strconv.Atoi(langId)
 	helper.PanicIfError(err)
 
-	langResponse := controller.LangService.Delete(context.Request.Context(), id)
+	value, _ := context.Get("user_lang_code")
+	user_lang_code := value.(string)
+
+	langResponse := controller.LangService.Delete(context, id)
 
 	if langResponse.LangId != 0 {
 		webResponse := helper.WebResponse{
 			Code:   200,
-			Status: "Success delete language",
+			Status: controller.TranslationService.Translation(context, "success_delete_language", user_lang_code),
 		}
 
 		context.Writer.Header().Add("Content-Type", "application/json")
@@ -142,7 +155,7 @@ func (controller *LangControllerImpl) Delete(context *gin.Context) {
 	} else {
 		webResponse := helper.WebResponse{
 			Code:   http.StatusNotFound,
-			Status: "Data not found",
+			Status: controller.TranslationService.Translation(context, "data_not_found", user_lang_code),
 			Data:   nil,
 		}
 
@@ -156,12 +169,15 @@ func (controller *LangControllerImpl) FindById(context *gin.Context) {
 	id, err := strconv.Atoi(langId)
 	helper.PanicIfError(err)
 
-	langResponse := controller.LangService.FindById(context.Request.Context(), id)
+	value, _ := context.Get("user_lang_code")
+	user_lang_code := value.(string)
+
+	langResponse := controller.LangService.FindById(context, id)
 
 	if langResponse.LangId != 0 {
 		webResponse := helper.WebResponse{
 			Code:   200,
-			Status: "Success get language",
+			Status: controller.TranslationService.Translation(context, "success_get_language", user_lang_code),
 			Data:   langResponse,
 		}
 
@@ -170,7 +186,7 @@ func (controller *LangControllerImpl) FindById(context *gin.Context) {
 	} else {
 		webResponse := helper.WebResponse{
 			Code:   http.StatusNotFound,
-			Status: "Data not found",
+			Status: controller.TranslationService.Translation(context, "data_not_found", user_lang_code),
 			Data:   nil,
 		}
 
@@ -180,12 +196,15 @@ func (controller *LangControllerImpl) FindById(context *gin.Context) {
 }
 
 func (controller *LangControllerImpl) FindAll(context *gin.Context) {
-	langResponses := controller.LangService.FindAll(context.Request.Context())
+	langResponses := controller.LangService.FindAll(context)
+
+	value, _ := context.Get("user_lang_code")
+	user_lang_code := value.(string)
 
 	if len(langResponses) > 0 {
 		webResponse := helper.WebResponse{
 			Code:   200,
-			Status: "Success get all langs",
+			Status: controller.TranslationService.Translation(context, "success_get_language", user_lang_code),
 			Data:   langResponses,
 		}
 
@@ -194,7 +213,7 @@ func (controller *LangControllerImpl) FindAll(context *gin.Context) {
 	} else {
 		webResponse := helper.WebResponse{
 			Code:   http.StatusNotFound,
-			Status: "Data not found",
+			Status: controller.TranslationService.Translation(context, "data_not_found", user_lang_code),
 			Data:   nil,
 		}
 

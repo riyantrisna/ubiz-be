@@ -31,6 +31,9 @@ func (controller *TranslationControllerImpl) Create(context *gin.Context) {
 	translationCreateRequest := model.TranslationCreateRequest{}
 	context.Bind(&translationCreateRequest)
 
+	value, _ := context.Get("user_lang_code")
+	user_lang_code := value.(string)
+
 	value, ok := context.Get("user_id")
 	if ok {
 		translationCreateRequest.CreatedBy = value.(int)
@@ -45,7 +48,7 @@ func (controller *TranslationControllerImpl) Create(context *gin.Context) {
 	if err != nil {
 		webResponse := helper.WebResponse{
 			Code:   http.StatusBadRequest,
-			Status: "Bad Request",
+			Status: controller.TranslationService.Translation(context, "bad_request", user_lang_code),
 			Data:   err.Error(),
 		}
 
@@ -54,10 +57,10 @@ func (controller *TranslationControllerImpl) Create(context *gin.Context) {
 		return
 	}
 
-	translationResponse := controller.TranslationService.Create(context.Request.Context(), translationCreateRequest)
+	translationResponse := controller.TranslationService.Create(context, translationCreateRequest)
 	webResponse := helper.WebResponse{
 		Code:   200,
-		Status: "Success create translation",
+		Status: controller.TranslationService.Translation(context, "success_create_translation", user_lang_code),
 		Data:   translationResponse,
 	}
 
@@ -68,6 +71,9 @@ func (controller *TranslationControllerImpl) Create(context *gin.Context) {
 func (controller *TranslationControllerImpl) Update(context *gin.Context) {
 	translationUpdateRequest := model.TranslationUpdateRequest{}
 	context.Bind(&translationUpdateRequest)
+
+	value, _ := context.Get("user_lang_code")
+	user_lang_code := value.(string)
 
 	value, ok := context.Get("user_id")
 	if ok {
@@ -89,7 +95,7 @@ func (controller *TranslationControllerImpl) Update(context *gin.Context) {
 	if err != nil {
 		webResponse := helper.WebResponse{
 			Code:   http.StatusBadRequest,
-			Status: "Bad Request",
+			Status: controller.TranslationService.Translation(context, "bad_request", user_lang_code),
 			Data:   err.Error(),
 		}
 
@@ -98,12 +104,12 @@ func (controller *TranslationControllerImpl) Update(context *gin.Context) {
 		return
 	}
 
-	translationResponse := controller.TranslationService.Update(context.Request.Context(), translationUpdateRequest)
+	translationResponse := controller.TranslationService.Update(context, translationUpdateRequest)
 
 	if translationResponse.TranslationId != 0 {
 		webResponse := helper.WebResponse{
 			Code:   200,
-			Status: "Success update translation",
+			Status: controller.TranslationService.Translation(context, "success_update_translation", user_lang_code),
 			Data:   translationResponse,
 		}
 
@@ -112,7 +118,7 @@ func (controller *TranslationControllerImpl) Update(context *gin.Context) {
 	} else {
 		webResponse := helper.WebResponse{
 			Code:   http.StatusNotFound,
-			Status: "Data not found",
+			Status: controller.TranslationService.Translation(context, "data_not_found", user_lang_code),
 			Data:   nil,
 		}
 
@@ -126,12 +132,15 @@ func (controller *TranslationControllerImpl) Delete(context *gin.Context) {
 	id, err := strconv.Atoi(translationId)
 	helper.PanicIfError(err)
 
-	translationResponse := controller.TranslationService.Delete(context.Request.Context(), id)
+	value, _ := context.Get("user_lang_code")
+	user_lang_code := value.(string)
+
+	translationResponse := controller.TranslationService.Delete(context, id)
 
 	if translationResponse.TranslationId != 0 {
 		webResponse := helper.WebResponse{
 			Code:   200,
-			Status: "Success delete translation",
+			Status: controller.TranslationService.Translation(context, "success_delete_translation", user_lang_code),
 		}
 
 		context.Writer.Header().Add("Content-Type", "application/json")
@@ -139,7 +148,7 @@ func (controller *TranslationControllerImpl) Delete(context *gin.Context) {
 	} else {
 		webResponse := helper.WebResponse{
 			Code:   http.StatusNotFound,
-			Status: "Data not found",
+			Status: controller.TranslationService.Translation(context, "data_not_found", user_lang_code),
 			Data:   nil,
 		}
 
@@ -153,12 +162,15 @@ func (controller *TranslationControllerImpl) FindById(context *gin.Context) {
 	id, err := strconv.Atoi(translationId)
 	helper.PanicIfError(err)
 
-	translationResponse := controller.TranslationService.FindById(context.Request.Context(), id)
+	value, _ := context.Get("user_lang_code")
+	user_lang_code := value.(string)
+
+	translationResponse := controller.TranslationService.FindById(context, id)
 
 	if translationResponse.TranslationId != 0 {
 		webResponse := helper.WebResponse{
 			Code:   200,
-			Status: "Success get translation",
+			Status: controller.TranslationService.Translation(context, "success_get_translation", user_lang_code),
 			Data:   translationResponse,
 		}
 
@@ -167,7 +179,7 @@ func (controller *TranslationControllerImpl) FindById(context *gin.Context) {
 	} else {
 		webResponse := helper.WebResponse{
 			Code:   http.StatusNotFound,
-			Status: "Data not found",
+			Status: controller.TranslationService.Translation(context, "data_not_found", user_lang_code),
 			Data:   nil,
 		}
 
@@ -177,12 +189,15 @@ func (controller *TranslationControllerImpl) FindById(context *gin.Context) {
 }
 
 func (controller *TranslationControllerImpl) FindAll(context *gin.Context) {
-	translationResponses := controller.TranslationService.FindAll(context.Request.Context())
+	translationResponses := controller.TranslationService.FindAll(context)
+
+	value, _ := context.Get("user_lang_code")
+	user_lang_code := value.(string)
 
 	if len(translationResponses) > 0 {
 		webResponse := helper.WebResponse{
 			Code:   200,
-			Status: "Success get all translations",
+			Status: controller.TranslationService.Translation(context, "success_get_translation", user_lang_code),
 			Data:   translationResponses,
 		}
 
@@ -191,7 +206,7 @@ func (controller *TranslationControllerImpl) FindAll(context *gin.Context) {
 	} else {
 		webResponse := helper.WebResponse{
 			Code:   http.StatusNotFound,
-			Status: "Data not found",
+			Status: controller.TranslationService.Translation(context, "data_not_found", user_lang_code),
 			Data:   nil,
 		}
 

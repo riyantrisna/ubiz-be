@@ -2,6 +2,7 @@ package middleware
 
 import (
 	"collapp/helper"
+	translationService "collapp/module/translation/service"
 	"collapp/module/user/service"
 	"database/sql"
 	"net/http"
@@ -22,13 +23,16 @@ type Claims struct {
 
 func Auth(db *sql.DB) gin.HandlerFunc {
 	return func(context *gin.Context) {
+		translationService := translationService.NewTranslationService(db)
+
 		jwtKey := []byte(viper.GetString(`jwt.key`))
+		defaultLang := viper.GetString(`defaultLang`)
 
 		reqToken := context.Request.Header.Get("Authorization")
 		if reqToken == "" {
 			webResponse := helper.WebResponse{
 				Code:   http.StatusUnauthorized,
-				Status: "Unauthorized",
+				Status: translationService.Translation(context, "unauthorized", defaultLang),
 			}
 
 			context.Writer.Header().Add("Content-Type", "application/json")
@@ -49,7 +53,7 @@ func Auth(db *sql.DB) gin.HandlerFunc {
 		if !tkn.Valid {
 			webResponse := helper.WebResponse{
 				Code:   http.StatusUnauthorized,
-				Status: "Unauthorized",
+				Status: translationService.Translation(context, "unauthorized", defaultLang),
 			}
 
 			context.Writer.Header().Add("Content-Type", "application/json")
@@ -70,7 +74,7 @@ func Auth(db *sql.DB) gin.HandlerFunc {
 		} else {
 			webResponse := helper.WebResponse{
 				Code:   http.StatusUnauthorized,
-				Status: "Unauthorized",
+				Status: translationService.Translation(context, "unauthorized", defaultLang),
 			}
 
 			context.Writer.Header().Add("Content-Type", "application/json")

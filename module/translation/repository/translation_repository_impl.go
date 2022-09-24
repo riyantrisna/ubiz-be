@@ -217,3 +217,29 @@ func (repository *TranslationRepositoryImpl) FindAll(ctx context.Context, tx *sq
 
 	return translations
 }
+
+func (repository *TranslationRepositoryImpl) Translation(ctx context.Context, tx *sql.Tx, key string, langCode string) string {
+	SQL := `SELECT
+				a.langkeytext_lang_text
+			FROM 
+				lang_key_text a
+			LEFT JOIN lang_key b ON b.langkey_id = a.langkeytext_langkey_id AND a.langkeytext_lang_code = ?
+			WHERE
+				b.langkey_key = ?`
+	rows, err := tx.QueryContext(ctx, SQL, langCode, key)
+	helper.PanicIfError(err)
+	defer rows.Close()
+
+	if rows.Next() {
+		var translation string
+		err := rows.Scan(&translation)
+		helper.PanicIfError(err)
+		if err == nil {
+			return translation
+		} else {
+			return "[" + key + "]"
+		}
+	} else {
+		return "[" + key + "]"
+	}
+}
