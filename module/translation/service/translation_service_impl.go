@@ -142,3 +142,13 @@ func (service *TranslationServiceImpl) Translation(ctx context.Context, key stri
 
 	return translation
 }
+
+func (service *TranslationServiceImpl) CheckKeyTranslationExist(ctx context.Context, key string) bool {
+	tx, err := service.DB.Begin()
+	helper.PanicIfError(err)
+	defer helper.CommitOrRollback(tx)
+
+	keyIsExsit := service.TranslationRepository.CheckKeyTranslationExist(ctx, tx, key)
+
+	return keyIsExsit
+}

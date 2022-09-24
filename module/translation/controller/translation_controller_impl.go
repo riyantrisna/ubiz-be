@@ -44,6 +44,19 @@ func (controller *TranslationControllerImpl) Create(context *gin.Context) {
 	currentTime := time.Now()
 	translationCreateRequest.CreatedAt = currentTime.Format("2006-01-02 15:04:05")
 
+	keyIsExist := controller.TranslationService.CheckKeyTranslationExist(context, translationCreateRequest.TranslationKey)
+	if keyIsExist {
+		webResponse := helper.WebResponse{
+			Code:   http.StatusBadRequest,
+			Status: controller.TranslationService.Translation(context, "bad_request", user_lang_code),
+			Data:   controller.TranslationService.Translation(context, "key_translation_is_exist", user_lang_code) + " (" + translationCreateRequest.TranslationKey + ")",
+		}
+
+		context.Writer.Header().Add("Content-Type", "application/json")
+		context.JSON(http.StatusBadRequest, webResponse)
+		return
+	}
+
 	err := controller.Validate.Struct(translationCreateRequest)
 	if err != nil {
 		webResponse := helper.WebResponse{

@@ -12,4 +12,5 @@ type TranslationService interface {
 	FindById(ctx context.Context, translationId int) model.TranslationResponse
 	FindAll(ctx context.Context) []model.TranslationResponse
 	Translation(ctx context.Context, key string, langCode string) string
+	CheckKeyTranslationExist(ctx context.Context, key string) bool
 }

@@ -243,3 +243,21 @@ func (repository *TranslationRepositoryImpl) Translation(ctx context.Context, tx
 		return "[" + key + "]"
 	}
 }
+
+func (repository *TranslationRepositoryImpl) CheckKeyTranslationExist(ctx context.Context, tx *sql.Tx, key string) bool {
+	SQL := `SELECT 
+				langkey_id
+			FROM 
+				lang_key
+			WHERE
+				langkey_key = ?`
+	rows, err := tx.QueryContext(ctx, SQL, key)
+	helper.PanicIfError(err)
+	defer rows.Close()
+
+	if rows.Next() {
+		return true
+	} else {
+		return false
+	}
+}
