@@ -28,18 +28,12 @@ func NewTranslationController(db *sql.DB) TranslationController {
 }
 
 func (controller *TranslationControllerImpl) Create(context *gin.Context) {
+	payloadJwt := helper.PayloadJwt(context)
+
 	translationCreateRequest := model.TranslationCreateRequest{}
 	context.Bind(&translationCreateRequest)
 
-	value, _ := context.Get("user_lang_code")
-	user_lang_code := value.(string)
-
-	value, ok := context.Get("user_id")
-	if ok {
-		translationCreateRequest.CreatedBy = value.(int)
-	} else {
-		translationCreateRequest.CreatedBy = 0
-	}
+	translationCreateRequest.CreatedBy = payloadJwt.UserId
 
 	currentTime := time.Now()
 	translationCreateRequest.CreatedAt = currentTime.Format("2006-01-02 15:04:05")
@@ -48,8 +42,8 @@ func (controller *TranslationControllerImpl) Create(context *gin.Context) {
 	if keyIsExist {
 		webResponse := helper.WebResponse{
 			Code:   http.StatusBadRequest,
-			Status: controller.TranslationService.Translation(context, "bad_request", user_lang_code),
-			Data:   controller.TranslationService.Translation(context, "key_translation_is_exist", user_lang_code) + " (" + translationCreateRequest.TranslationKey + ")",
+			Status: controller.TranslationService.Translation(context, "bad_request", payloadJwt.UserLangCode),
+			Data:   controller.TranslationService.Translation(context, "key_translation_is_exist", payloadJwt.UserLangCode) + " (" + translationCreateRequest.TranslationKey + ")",
 		}
 
 		context.Writer.Header().Add("Content-Type", "application/json")
@@ -61,7 +55,7 @@ func (controller *TranslationControllerImpl) Create(context *gin.Context) {
 	if err != nil {
 		webResponse := helper.WebResponse{
 			Code:   http.StatusBadRequest,
-			Status: controller.TranslationService.Translation(context, "bad_request", user_lang_code),
+			Status: controller.TranslationService.Translation(context, "bad_request", payloadJwt.UserLangCode),
 			Data:   err.Error(),
 		}
 
@@ -73,7 +67,7 @@ func (controller *TranslationControllerImpl) Create(context *gin.Context) {
 	translationResponse := controller.TranslationService.Create(context, translationCreateRequest)
 	webResponse := helper.WebResponse{
 		Code:   200,
-		Status: controller.TranslationService.Translation(context, "success_create_translation", user_lang_code),
+		Status: controller.TranslationService.Translation(context, "success_create_translation", payloadJwt.UserLangCode),
 		Data:   translationResponse,
 	}
 
@@ -82,18 +76,12 @@ func (controller *TranslationControllerImpl) Create(context *gin.Context) {
 }
 
 func (controller *TranslationControllerImpl) Update(context *gin.Context) {
+	payloadJwt := helper.PayloadJwt(context)
+
 	translationUpdateRequest := model.TranslationUpdateRequest{}
 	context.Bind(&translationUpdateRequest)
 
-	value, _ := context.Get("user_lang_code")
-	user_lang_code := value.(string)
-
-	value, ok := context.Get("user_id")
-	if ok {
-		translationUpdateRequest.UpdatedBy = value.(int)
-	} else {
-		translationUpdateRequest.UpdatedBy = 0
-	}
+	translationUpdateRequest.UpdatedBy = payloadJwt.UserId
 
 	currentTime := time.Now()
 	translationUpdateRequest.UpdatedAt = currentTime.Format("2006-01-02 15:04:05")
@@ -108,7 +96,7 @@ func (controller *TranslationControllerImpl) Update(context *gin.Context) {
 	if err != nil {
 		webResponse := helper.WebResponse{
 			Code:   http.StatusBadRequest,
-			Status: controller.TranslationService.Translation(context, "bad_request", user_lang_code),
+			Status: controller.TranslationService.Translation(context, "bad_request", payloadJwt.UserLangCode),
 			Data:   err.Error(),
 		}
 
@@ -122,7 +110,7 @@ func (controller *TranslationControllerImpl) Update(context *gin.Context) {
 	if translationResponse.TranslationId != 0 {
 		webResponse := helper.WebResponse{
 			Code:   200,
-			Status: controller.TranslationService.Translation(context, "success_update_translation", user_lang_code),
+			Status: controller.TranslationService.Translation(context, "success_update_translation", payloadJwt.UserLangCode),
 			Data:   translationResponse,
 		}
 
@@ -131,7 +119,7 @@ func (controller *TranslationControllerImpl) Update(context *gin.Context) {
 	} else {
 		webResponse := helper.WebResponse{
 			Code:   http.StatusNotFound,
-			Status: controller.TranslationService.Translation(context, "data_not_found", user_lang_code),
+			Status: controller.TranslationService.Translation(context, "data_not_found", payloadJwt.UserLangCode),
 			Data:   nil,
 		}
 
@@ -141,19 +129,18 @@ func (controller *TranslationControllerImpl) Update(context *gin.Context) {
 }
 
 func (controller *TranslationControllerImpl) Delete(context *gin.Context) {
+	payloadJwt := helper.PayloadJwt(context)
+
 	translationId := context.Param("translationId")
 	id, err := strconv.Atoi(translationId)
 	helper.PanicIfError(err)
-
-	value, _ := context.Get("user_lang_code")
-	user_lang_code := value.(string)
 
 	translationResponse := controller.TranslationService.Delete(context, id)
 
 	if translationResponse.TranslationId != 0 {
 		webResponse := helper.WebResponse{
 			Code:   200,
-			Status: controller.TranslationService.Translation(context, "success_delete_translation", user_lang_code),
+			Status: controller.TranslationService.Translation(context, "success_delete_translation", payloadJwt.UserLangCode),
 		}
 
 		context.Writer.Header().Add("Content-Type", "application/json")
@@ -161,7 +148,7 @@ func (controller *TranslationControllerImpl) Delete(context *gin.Context) {
 	} else {
 		webResponse := helper.WebResponse{
 			Code:   http.StatusNotFound,
-			Status: controller.TranslationService.Translation(context, "data_not_found", user_lang_code),
+			Status: controller.TranslationService.Translation(context, "data_not_found", payloadJwt.UserLangCode),
 			Data:   nil,
 		}
 
@@ -171,19 +158,18 @@ func (controller *TranslationControllerImpl) Delete(context *gin.Context) {
 }
 
 func (controller *TranslationControllerImpl) FindById(context *gin.Context) {
+	payloadJwt := helper.PayloadJwt(context)
+
 	translationId := context.Param("translationId")
 	id, err := strconv.Atoi(translationId)
 	helper.PanicIfError(err)
-
-	value, _ := context.Get("user_lang_code")
-	user_lang_code := value.(string)
 
 	translationResponse := controller.TranslationService.FindById(context, id)
 
 	if translationResponse.TranslationId != 0 {
 		webResponse := helper.WebResponse{
 			Code:   200,
-			Status: controller.TranslationService.Translation(context, "success_get_translation", user_lang_code),
+			Status: controller.TranslationService.Translation(context, "success_get_translation", payloadJwt.UserLangCode),
 			Data:   translationResponse,
 		}
 
@@ -192,7 +178,7 @@ func (controller *TranslationControllerImpl) FindById(context *gin.Context) {
 	} else {
 		webResponse := helper.WebResponse{
 			Code:   http.StatusNotFound,
-			Status: controller.TranslationService.Translation(context, "data_not_found", user_lang_code),
+			Status: controller.TranslationService.Translation(context, "data_not_found", payloadJwt.UserLangCode),
 			Data:   nil,
 		}
 
@@ -202,15 +188,14 @@ func (controller *TranslationControllerImpl) FindById(context *gin.Context) {
 }
 
 func (controller *TranslationControllerImpl) FindAll(context *gin.Context) {
-	translationResponses := controller.TranslationService.FindAll(context)
+	payloadJwt := helper.PayloadJwt(context)
 
-	value, _ := context.Get("user_lang_code")
-	user_lang_code := value.(string)
+	translationResponses := controller.TranslationService.FindAll(context)
 
 	if len(translationResponses) > 0 {
 		webResponse := helper.WebResponse{
 			Code:   200,
-			Status: controller.TranslationService.Translation(context, "success_get_translation", user_lang_code),
+			Status: controller.TranslationService.Translation(context, "success_get_translation", payloadJwt.UserLangCode),
 			Data:   translationResponses,
 		}
 
@@ -219,7 +204,7 @@ func (controller *TranslationControllerImpl) FindAll(context *gin.Context) {
 	} else {
 		webResponse := helper.WebResponse{
 			Code:   http.StatusNotFound,
-			Status: controller.TranslationService.Translation(context, "data_not_found", user_lang_code),
+			Status: controller.TranslationService.Translation(context, "data_not_found", payloadJwt.UserLangCode),
 			Data:   nil,
 		}
 

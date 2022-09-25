@@ -36,20 +36,14 @@ func NewUserController(db *sql.DB) UserController {
 }
 
 func (controller *UserControllerImpl) Create(context *gin.Context) {
+	payloadJwt := helper.PayloadJwt(context)
+
 	password := []byte(viper.GetString("defaultPassword"))
 
 	userCreateRequest := model.UserCreateRequest{}
 	context.Bind(&userCreateRequest)
 
-	value, _ := context.Get("user_lang_code")
-	user_lang_code := value.(string)
-
-	value, ok := context.Get("user_id")
-	if ok {
-		userCreateRequest.CreatedBy = value.(int)
-	} else {
-		userCreateRequest.CreatedBy = 0
-	}
+	userCreateRequest.CreatedBy = payloadJwt.UserId
 
 	currentTime := time.Now()
 	userCreateRequest.CreatedAt = currentTime.Format("2006-01-02 15:04:05")
@@ -63,7 +57,7 @@ func (controller *UserControllerImpl) Create(context *gin.Context) {
 	if err != nil {
 		webResponse := helper.WebResponse{
 			Code:   http.StatusBadRequest,
-			Status: controller.TranslationService.Translation(context, "bad_request", user_lang_code),
+			Status: controller.TranslationService.Translation(context, "bad_request", payloadJwt.UserLangCode),
 			Data:   err.Error(),
 		}
 
@@ -75,7 +69,7 @@ func (controller *UserControllerImpl) Create(context *gin.Context) {
 	userResponse := controller.UserService.Create(context, userCreateRequest)
 	webResponse := helper.WebResponse{
 		Code:   200,
-		Status: controller.TranslationService.Translation(context, "success_create_user", user_lang_code),
+		Status: controller.TranslationService.Translation(context, "success_create_user", payloadJwt.UserLangCode),
 		Data:   userResponse,
 	}
 
@@ -84,18 +78,12 @@ func (controller *UserControllerImpl) Create(context *gin.Context) {
 }
 
 func (controller *UserControllerImpl) Update(context *gin.Context) {
+	payloadJwt := helper.PayloadJwt(context)
+
 	userUpdateRequest := model.UserUpdateRequest{}
 	context.Bind(&userUpdateRequest)
 
-	value, _ := context.Get("user_lang_code")
-	user_lang_code := value.(string)
-
-	value, ok := context.Get("user_id")
-	if ok {
-		userUpdateRequest.UpdatedBy = value.(int)
-	} else {
-		userUpdateRequest.UpdatedBy = 0
-	}
+	userUpdateRequest.UpdatedBy = payloadJwt.UserId
 
 	currentTime := time.Now()
 	userUpdateRequest.UpdatedAt = currentTime.Format("2006-01-02 15:04:05")
@@ -110,7 +98,7 @@ func (controller *UserControllerImpl) Update(context *gin.Context) {
 	if err != nil {
 		webResponse := helper.WebResponse{
 			Code:   http.StatusBadRequest,
-			Status: controller.TranslationService.Translation(context, "bad_request", user_lang_code),
+			Status: controller.TranslationService.Translation(context, "bad_request", payloadJwt.UserLangCode),
 			Data:   err.Error(),
 		}
 
@@ -124,7 +112,7 @@ func (controller *UserControllerImpl) Update(context *gin.Context) {
 	if userResponse.UserId != 0 {
 		webResponse := helper.WebResponse{
 			Code:   200,
-			Status: controller.TranslationService.Translation(context, "success_update_user", user_lang_code),
+			Status: controller.TranslationService.Translation(context, "success_update_user", payloadJwt.UserLangCode),
 			Data:   userResponse,
 		}
 
@@ -133,7 +121,7 @@ func (controller *UserControllerImpl) Update(context *gin.Context) {
 	} else {
 		webResponse := helper.WebResponse{
 			Code:   http.StatusNotFound,
-			Status: controller.TranslationService.Translation(context, "data_not_found", user_lang_code),
+			Status: controller.TranslationService.Translation(context, "data_not_found", payloadJwt.UserLangCode),
 			Data:   nil,
 		}
 
@@ -143,11 +131,10 @@ func (controller *UserControllerImpl) Update(context *gin.Context) {
 }
 
 func (controller *UserControllerImpl) Delete(context *gin.Context) {
+	payloadJwt := helper.PayloadJwt(context)
+
 	userDeleteRequest := model.UserDeleteRequest{}
 	context.Bind(&userDeleteRequest)
-
-	value, _ := context.Get("user_lang_code")
-	user_lang_code := value.(string)
 
 	userId := context.Param("userId")
 	id, err := strconv.Atoi(userId)
@@ -156,12 +143,7 @@ func (controller *UserControllerImpl) Delete(context *gin.Context) {
 	if userDeleteRequest.IsSoftDelete {
 		userDeleteRequest.UserId = id
 
-		value, ok := context.Get("user_id")
-		if ok {
-			userDeleteRequest.DeletedBy = value.(int)
-		} else {
-			userDeleteRequest.DeletedBy = 0
-		}
+		userDeleteRequest.DeletedBy = payloadJwt.UserId
 
 		currentTime := time.Now()
 		userDeleteRequest.DeletedAt = currentTime.Format("2006-01-02 15:04:05")
@@ -171,7 +153,7 @@ func (controller *UserControllerImpl) Delete(context *gin.Context) {
 		if userResponse.UserId != 0 {
 			webResponse := helper.WebResponse{
 				Code:   200,
-				Status: controller.TranslationService.Translation(context, "success_delete_user", user_lang_code),
+				Status: controller.TranslationService.Translation(context, "success_delete_user", payloadJwt.UserLangCode),
 			}
 
 			context.Writer.Header().Add("Content-Type", "application/json")
@@ -179,7 +161,7 @@ func (controller *UserControllerImpl) Delete(context *gin.Context) {
 		} else {
 			webResponse := helper.WebResponse{
 				Code:   http.StatusNotFound,
-				Status: controller.TranslationService.Translation(context, "data_not_found", user_lang_code),
+				Status: controller.TranslationService.Translation(context, "data_not_found", payloadJwt.UserLangCode),
 				Data:   nil,
 			}
 
@@ -192,7 +174,7 @@ func (controller *UserControllerImpl) Delete(context *gin.Context) {
 		if userResponse.UserId != 0 {
 			webResponse := helper.WebResponse{
 				Code:   200,
-				Status: controller.TranslationService.Translation(context, "success_delete_user", user_lang_code),
+				Status: controller.TranslationService.Translation(context, "success_delete_user", payloadJwt.UserLangCode),
 			}
 
 			context.Writer.Header().Add("Content-Type", "application/json")
@@ -200,7 +182,7 @@ func (controller *UserControllerImpl) Delete(context *gin.Context) {
 		} else {
 			webResponse := helper.WebResponse{
 				Code:   http.StatusNotFound,
-				Status: controller.TranslationService.Translation(context, "data_not_found", user_lang_code),
+				Status: controller.TranslationService.Translation(context, "data_not_found", payloadJwt.UserLangCode),
 				Data:   nil,
 			}
 
@@ -211,19 +193,18 @@ func (controller *UserControllerImpl) Delete(context *gin.Context) {
 }
 
 func (controller *UserControllerImpl) FindById(context *gin.Context) {
+	payloadJwt := helper.PayloadJwt(context)
+
 	userId := context.Param("userId")
 	id, err := strconv.Atoi(userId)
 	helper.PanicIfError(err)
-
-	value, _ := context.Get("user_lang_code")
-	user_lang_code := value.(string)
 
 	userResponse := controller.UserService.FindById(context, id)
 
 	if userResponse.UserId != 0 {
 		webResponse := helper.WebResponse{
 			Code:   200,
-			Status: controller.TranslationService.Translation(context, "success_get_user", user_lang_code),
+			Status: controller.TranslationService.Translation(context, "success_get_user", payloadJwt.UserLangCode),
 			Data:   userResponse,
 		}
 
@@ -232,7 +213,7 @@ func (controller *UserControllerImpl) FindById(context *gin.Context) {
 	} else {
 		webResponse := helper.WebResponse{
 			Code:   http.StatusNotFound,
-			Status: controller.TranslationService.Translation(context, "data_not_found", user_lang_code),
+			Status: controller.TranslationService.Translation(context, "data_not_found", payloadJwt.UserLangCode),
 			Data:   nil,
 		}
 
@@ -242,15 +223,14 @@ func (controller *UserControllerImpl) FindById(context *gin.Context) {
 }
 
 func (controller *UserControllerImpl) FindAll(context *gin.Context) {
-	userResponses := controller.UserService.FindAll(context)
+	payloadJwt := helper.PayloadJwt(context)
 
-	value, _ := context.Get("user_lang_code")
-	user_lang_code := value.(string)
+	userResponses := controller.UserService.FindAll(context)
 
 	if len(userResponses) > 0 {
 		webResponse := helper.WebResponse{
 			Code:   200,
-			Status: controller.TranslationService.Translation(context, "success_get_user", user_lang_code),
+			Status: controller.TranslationService.Translation(context, "success_get_user", payloadJwt.UserLangCode),
 			Data:   userResponses,
 		}
 
@@ -259,7 +239,7 @@ func (controller *UserControllerImpl) FindAll(context *gin.Context) {
 	} else {
 		webResponse := helper.WebResponse{
 			Code:   http.StatusNotFound,
-			Status: controller.TranslationService.Translation(context, "data_not_found", user_lang_code),
+			Status: controller.TranslationService.Translation(context, "data_not_found", payloadJwt.UserLangCode),
 			Data:   nil,
 		}
 
@@ -517,8 +497,7 @@ func (controller *UserControllerImpl) RefreshToken(context *gin.Context) {
 }
 
 func (controller *UserControllerImpl) Logout(context *gin.Context) {
-	value, _ := context.Get("user_lang_code")
-	user_lang_code := value.(string)
+	payloadJwt := helper.PayloadJwt(context)
 
 	userId := 0
 	value, ok := context.Get("user_id")
@@ -531,7 +510,7 @@ func (controller *UserControllerImpl) Logout(context *gin.Context) {
 	if userResponse.UserId != 0 {
 		webResponse := helper.WebResponse{
 			Code:   200,
-			Status: controller.TranslationService.Translation(context, "success_logout", user_lang_code),
+			Status: controller.TranslationService.Translation(context, "success_logout", payloadJwt.UserLangCode),
 		}
 
 		context.Writer.Header().Add("Content-Type", "application/json")
@@ -539,7 +518,7 @@ func (controller *UserControllerImpl) Logout(context *gin.Context) {
 	} else {
 		webResponse := helper.WebResponse{
 			Code:   http.StatusNotFound,
-			Status: controller.TranslationService.Translation(context, "data_not_found", user_lang_code),
+			Status: controller.TranslationService.Translation(context, "data_not_found", payloadJwt.UserLangCode),
 			Data:   nil,
 		}
 
