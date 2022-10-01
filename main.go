@@ -18,10 +18,9 @@ func main() {
 	config = configs.Get()
 
 	// prepare http router
-	router := httpTransport.Setup()
+	router, api := httpTransport.Setup()
 
 	db := infras.NewMysqlDB(config)
-	api := router.Group("/api/v1")
 
 	user.Router(db, api, config)
 	lang.Router(db, api, config)
