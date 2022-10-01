@@ -2,6 +2,7 @@ package main
 
 import (
 	"collapp/app"
+	"collapp/configs"
 	"collapp/middleware"
 	"collapp/module/lang"
 	"collapp/module/translation"
@@ -12,7 +13,12 @@ import (
 	"github.com/spf13/viper"
 )
 
+var config *configs.Config
+
 func main() {
+	// Initialize config
+	config = configs.Get()
+
 	viper.SetConfigFile(`config.json`)
 	err := viper.ReadInConfig()
 	if err != nil {
