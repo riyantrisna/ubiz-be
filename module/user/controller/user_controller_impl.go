@@ -1,11 +1,12 @@
 package controller
 
 import (
+	"collapp/configs"
 	"collapp/helper"
-	"collapp/middleware"
 	translationService "collapp/module/translation/service"
 	"collapp/module/user/model"
 	"collapp/module/user/service"
+	"collapp/transport/http/middleware"
 	"database/sql"
 	"net/http"
 	"strconv"
@@ -14,7 +15,6 @@ import (
 	"github.com/dgrijalva/jwt-go"
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator/v10"
-	"github.com/spf13/viper"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -22,9 +22,10 @@ type UserControllerImpl struct {
 	UserService        service.UserService
 	Validate           *validator.Validate
 	TranslationService translationService.TranslationService
+	config             *configs.Config
 }
 
-func NewUserController(db *sql.DB) UserController {
+func NewUserController(db *sql.DB, cfg *configs.Config) UserController {
 	validate := validator.New()
 	userService := service.NewUserService(db)
 	translationService := translationService.NewTranslationService(db)
@@ -32,13 +33,14 @@ func NewUserController(db *sql.DB) UserController {
 		UserService:        userService,
 		Validate:           validate,
 		TranslationService: translationService,
+		config:             cfg,
 	}
 }
 
 func (controller *UserControllerImpl) Create(context *gin.Context) {
 	payloadJwt := helper.PayloadJwt(context)
 
-	password := []byte(viper.GetString("defaultPassword"))
+	password := []byte(controller.config.DefaultPassword)
 
 	userCreateRequest := model.UserCreateRequest{}
 	context.Bind(&userCreateRequest)
@@ -67,7 +69,7 @@ func (controller *UserControllerImpl) Create(context *gin.Context) {
 	}
 
 	if userCreateRequest.UserPhoto != nil {
-		var pathFile = viper.GetString("files.photo")
+		var pathFile = controller.config.Files.Photo
 		var requestFile = "user_photo"
 
 		fileName, err := helper.UploadFile(context, requestFile, pathFile)
@@ -126,7 +128,7 @@ func (controller *UserControllerImpl) Update(context *gin.Context) {
 		return
 	}
 
-	var pathFile = viper.GetString("files.photo")
+	var pathFile = controller.config.Files.Photo
 
 	if userUpdateRequest.UserPhoto != nil {
 		var requestFile = "user_photo"
@@ -216,7 +218,7 @@ func (controller *UserControllerImpl) Delete(context *gin.Context) {
 
 		if userResponse.UserId != 0 {
 			if userResponse.UserPhoto != "" {
-				var pathFile = viper.GetString("files.photo")
+				var pathFile = controller.config.Files.Photo
 				helper.DeleteFile(userResponse.UserPhoto, pathFile)
 			}
 			webResponse := helper.WebResponse{
@@ -296,8 +298,8 @@ func (controller *UserControllerImpl) FindAll(context *gin.Context) {
 }
 
 func (controller *UserControllerImpl) Login(context *gin.Context) {
-	jwtKey := []byte(viper.GetString(`jwt.key`))
-	defaultLang := viper.GetString(`defaultLang`)
+	jwtKey := []byte(controller.config.JWT.Key)
+	defaultLang := controller.config.DefaultLang
 
 	currentTime := time.Now()
 	userLoginRequest := model.UserLoginRequest{}
@@ -324,11 +326,11 @@ func (controller *UserControllerImpl) Login(context *gin.Context) {
 
 		userResponse := controller.UserService.FindById(context, userCheck.UserId)
 
-		expired := viper.GetInt(`jwt.expired`)
-		expiredRefresh := viper.GetInt(`jwt.expiredRefresh`)
+		expired := controller.config.JWT.Expired
+		expiredRefresh := controller.config.JWT.ExpiredRefresh
 
 		// start cretae JWT
-		expirationTime := time.Now().Add(time.Duration(expired) * time.Minute)
+		expirationTime := time.Now().Add(expired)
 		claims := middleware.Claims{
 			UserId:       userResponse.UserId,
 			UserName:     userResponse.UserName,
@@ -353,7 +355,7 @@ func (controller *UserControllerImpl) Login(context *gin.Context) {
 			return
 		}
 
-		expirationTimeRefresh := time.Now().Add(time.Duration(expiredRefresh) * time.Minute)
+		expirationTimeRefresh := time.Now().Add(expiredRefresh)
 		claimsRefresh := middleware.Claims{
 			UserId:       userResponse.UserId,
 			UserName:     userResponse.UserName,
@@ -420,7 +422,7 @@ func (controller *UserControllerImpl) Login(context *gin.Context) {
 }
 
 func (controller *UserControllerImpl) RefreshToken(context *gin.Context) {
-	jwtKey := []byte(viper.GetString(`jwt.key`))
+	jwtKey := []byte(controller.config.JWT.Key)
 
 	currentTime := time.Now()
 	userRefreshToken := context.Param("userRefreshToken")
@@ -448,11 +450,11 @@ func (controller *UserControllerImpl) RefreshToken(context *gin.Context) {
 
 		userResponse := controller.UserService.FindById(context, userCheck.UserId)
 
-		expired := viper.GetInt(`jwt.expired`)
-		expiredRefresh := viper.GetInt(`jwt.expiredRefresh`)
+		expired := controller.config.JWT.Expired
+		expiredRefresh := controller.config.JWT.ExpiredRefresh
 
 		// start cretae JWT
-		expirationTime := time.Now().Add(time.Duration(expired) * time.Minute)
+		expirationTime := time.Now().Add(expired)
 		claims := middleware.Claims{
 			UserId:       userResponse.UserId,
 			UserName:     userResponse.UserName,
@@ -477,7 +479,7 @@ func (controller *UserControllerImpl) RefreshToken(context *gin.Context) {
 			return
 		}
 
-		expirationTimeRefresh := time.Now().Add(time.Duration(expiredRefresh) * time.Minute)
+		expirationTimeRefresh := time.Now().Add(expiredRefresh)
 		claimsRefresh := middleware.Claims{
 			UserId:       userResponse.UserId,
 			UserName:     userResponse.UserName,

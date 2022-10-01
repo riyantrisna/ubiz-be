@@ -29,9 +29,9 @@ func main() {
 	db := infras.NewMysqlDB(config)
 	api := router.Group("/api/v1")
 
-	user.Router(db, api)
-	lang.Router(db, api)
-	translation.Router(db, api)
+	user.Router(db, api, config)
+	lang.Router(db, api, config)
+	translation.Router(db, api, config)
 
 	router.Run(config.Address)
 }

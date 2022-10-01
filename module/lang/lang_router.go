@@ -1,19 +1,20 @@
 package lang
 
 import (
-	"collapp/middleware"
+	"collapp/configs"
 	"collapp/module/lang/controller"
+	"collapp/transport/http/middleware"
 	"database/sql"
 
 	"github.com/gin-gonic/gin"
 )
 
-func Router(db *sql.DB, router *gin.RouterGroup) {
+func Router(db *sql.DB, router *gin.RouterGroup, cfg *configs.Config) {
 
-	langController := controller.NewLangController(db)
+	langController := controller.NewLangController(db, cfg)
 	lang := router.Group("/lang")
 
-	lang.Use(middleware.Auth(db))
+	lang.Use(middleware.Auth(db, cfg))
 	{
 		lang.GET("/", langController.FindAll)
 		lang.GET("/:langId", langController.FindById)

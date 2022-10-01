@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"collapp/configs"
 	"collapp/helper"
 	"collapp/module/lang/model"
 	"collapp/module/lang/service"
@@ -19,9 +20,10 @@ type LangControllerImpl struct {
 	LangService        service.LangService
 	Validate           *validator.Validate
 	TranslationService translationService.TranslationService
+	config             *configs.Config
 }
 
-func NewLangController(db *sql.DB) LangController {
+func NewLangController(db *sql.DB, cfg *configs.Config) LangController {
 	validate := validator.New()
 	langService := service.NewLangService(db)
 	translationService := translationService.NewTranslationService(db)
@@ -29,6 +31,7 @@ func NewLangController(db *sql.DB) LangController {
 		LangService:        langService,
 		Validate:           validate,
 		TranslationService: translationService,
+		config:             cfg,
 	}
 }
 

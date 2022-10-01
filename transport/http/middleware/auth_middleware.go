@@ -1,6 +1,7 @@
 package middleware
 
 import (
+	"collapp/configs"
 	"collapp/helper"
 	translationService "collapp/module/translation/service"
 	"collapp/module/user/service"
@@ -10,7 +11,6 @@ import (
 
 	"github.com/dgrijalva/jwt-go"
 	"github.com/gin-gonic/gin"
-	"github.com/spf13/viper"
 )
 
 type Claims struct {
@@ -21,12 +21,12 @@ type Claims struct {
 	jwt.StandardClaims
 }
 
-func Auth(db *sql.DB) gin.HandlerFunc {
+func Auth(db *sql.DB, cfg *configs.Config) gin.HandlerFunc {
 	return func(context *gin.Context) {
 		translationService := translationService.NewTranslationService(db)
 
-		jwtKey := []byte(viper.GetString(`jwt.key`))
-		defaultLang := viper.GetString(`defaultLang`)
+		jwtKey := []byte(cfg.JWT.Key)
+		defaultLang := cfg.DefaultLang
 
 		reqToken := context.Request.Header.Get("Authorization")
 		if reqToken == "" {
