@@ -38,22 +38,23 @@ func (service *UserServiceImpl) Create(ctx context.Context, request model.UserCr
 	}
 }
 
-func (service *UserServiceImpl) Update(ctx context.Context, request model.UserUpdateRequest) model.UserResponse {
+func (service *UserServiceImpl) Update(ctx context.Context, request model.UserUpdateRequest) (model.UserResponse, string) {
 	tx, err := service.DB.Begin()
 	helper.PanicIfError(err)
 	defer helper.CommitOrRollback(tx)
 
 	userData, err := service.UserRepository.FindById(ctx, tx, request.UserId)
+	userPhoto := userData.UserPhoto
 	if err == nil {
 		userData = service.UserRepository.Update(ctx, tx, request)
 
 		userData, err := service.UserRepository.FindById(ctx, tx, userData.UserId)
 		helper.PanicIfError(err)
 
-		return model.ToUserResponse(userData)
+		return model.ToUserResponse(userData), userPhoto
 	}
 
-	return model.ToUserResponse(userData)
+	return model.ToUserResponse(userData), userPhoto
 }
 
 func (service *UserServiceImpl) Delete(ctx context.Context, userId int) model.UserResponse {

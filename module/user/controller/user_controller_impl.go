@@ -66,6 +66,25 @@ func (controller *UserControllerImpl) Create(context *gin.Context) {
 		return
 	}
 
+	if userCreateRequest.UserPhoto != nil {
+		var pathFile = viper.GetString("files.photo")
+		var requestFile = "user_photo"
+
+		fileName, err := helper.UploadFile(context, requestFile, pathFile)
+		userCreateRequest.UserPhotoName = fileName
+		if err != nil {
+			webResponse := helper.WebResponse{
+				Code:   http.StatusInternalServerError,
+				Status: controller.TranslationService.Translation(context, "internal_server_error", payloadJwt.UserLangCode) + " " + controller.TranslationService.Translation(context, "file_upload_failed", payloadJwt.UserLangCode),
+				Data:   nil,
+			}
+
+			context.Writer.Header().Add("Content-Type", "application/json")
+			context.JSON(http.StatusInternalServerError, webResponse)
+			return
+		}
+	}
+
 	userResponse := controller.UserService.Create(context, userCreateRequest)
 	webResponse := helper.WebResponse{
 		Code:   200,
@@ -107,7 +126,31 @@ func (controller *UserControllerImpl) Update(context *gin.Context) {
 		return
 	}
 
-	userResponse := controller.UserService.Update(context, userUpdateRequest)
+	var pathFile = viper.GetString("files.photo")
+
+	if userUpdateRequest.UserPhoto != nil {
+		var requestFile = "user_photo"
+
+		fileName, err := helper.UploadFile(context, requestFile, pathFile)
+		userUpdateRequest.UserPhotoName = fileName
+		if err != nil {
+			webResponse := helper.WebResponse{
+				Code:   http.StatusInternalServerError,
+				Status: controller.TranslationService.Translation(context, "internal_server_error", payloadJwt.UserLangCode) + " " + controller.TranslationService.Translation(context, "file_upload_failed", payloadJwt.UserLangCode),
+				Data:   nil,
+			}
+
+			context.Writer.Header().Add("Content-Type", "application/json")
+			context.JSON(http.StatusInternalServerError, webResponse)
+			return
+		}
+	}
+
+	userResponse, oldPhoto := controller.UserService.Update(context, userUpdateRequest)
+
+	if userUpdateRequest.UserPhoto != nil && oldPhoto != "" {
+		helper.DeleteFile(oldPhoto, pathFile)
+	}
 
 	if userResponse.UserId != 0 {
 		webResponse := helper.WebResponse{
@@ -172,6 +215,10 @@ func (controller *UserControllerImpl) Delete(context *gin.Context) {
 		userResponse := controller.UserService.Delete(context, id)
 
 		if userResponse.UserId != 0 {
+			if userResponse.UserPhoto != "" {
+				var pathFile = viper.GetString("files.photo")
+				helper.DeleteFile(userResponse.UserPhoto, pathFile)
+			}
 			webResponse := helper.WebResponse{
 				Code:   200,
 				Status: controller.TranslationService.Translation(context, "success_delete_user", payloadJwt.UserLangCode),

@@ -14,11 +14,14 @@
             "connMaxIdleTime": 10
         }
     },
-    "jwt":{
+    "jwt": {
         "key": "RiyanGanteng",
-        "expired": 60, 
+        "expired": 60,
         "expiredRefresh": 61
     },
     "defaultPassword": "Abc123",
-    "defaultLang": "en"
+    "defaultLang": "en",
+    "files": {
+        "photo": "public/upload/user/photo/"
+    }
 }

@@ -22,9 +22,11 @@ func (repository *UserRepositoryImpl) Save(ctx context.Context, tx *sql.Tx, user
 				user_email, 
 				user_password, 
 				user_lang_code, 
+				user_photo,
 				created_by, 
 				created_at
 			) VALUES (
+				?, 
 				?, 
 				?, 
 				?, 
@@ -37,6 +39,7 @@ func (repository *UserRepositoryImpl) Save(ctx context.Context, tx *sql.Tx, user
 		user.UserEmail,
 		user.UserPassword,
 		user.UserLangCode,
+		user.UserPhotoName,
 		user.CreatedBy,
 		user.CreatedAt)
 	helper.PanicIfError(err)
@@ -56,6 +59,7 @@ func (repository *UserRepositoryImpl) Update(ctx context.Context, tx *sql.Tx, us
 				user_name = ?, 
 				user_email = ?, 
 				user_lang_code = ?, 
+				user_photo = ?,
 				updated_by = ?, 
 				updated_at = ? 
 			WHERE 
@@ -64,6 +68,7 @@ func (repository *UserRepositoryImpl) Update(ctx context.Context, tx *sql.Tx, us
 		user.UserName,
 		user.UserEmail,
 		user.UserLangCode,
+		user.UserPhotoName,
 		user.UpdatedBy,
 		user.UpdatedAt,
 		user.UserId)
@@ -104,6 +109,7 @@ func (repository *UserRepositoryImpl) FindById(ctx context.Context, tx *sql.Tx, 
 				a.user_token_refresh, 
 				a.user_lang_code, 
 				a.user_last_login, 
+				a.user_photo,
 				a.created_by, 
 				b.user_name,
 				a.created_at, 
@@ -133,6 +139,7 @@ func (repository *UserRepositoryImpl) FindById(ctx context.Context, tx *sql.Tx, 
 			&user.UserTokenRefreshCheck,
 			&user.UserLangCode,
 			&user.UserLastLoginCheck,
+			&user.UserPhotoCheck,
 			&user.CreatedByCheck,
 			&user.CreatedByNameCheck,
 			&user.CreatedAtCheck,
@@ -150,6 +157,9 @@ func (repository *UserRepositoryImpl) FindById(ctx context.Context, tx *sql.Tx, 
 	}
 	if user.UserLastLoginCheck.Valid {
 		user.UserLastLogin = user.UserLastLoginCheck.String
+	}
+	if user.UserPhotoCheck.Valid {
+		user.UserPhoto = user.UserPhotoCheck.String
 	}
 	if user.CreatedByCheck.Valid {
 		user.CreatedBy = int(user.CreatedByCheck.Int32)
@@ -182,6 +192,7 @@ func (repository *UserRepositoryImpl) FindAll(ctx context.Context, tx *sql.Tx) [
 				a.user_token_refresh, 
 				a.user_lang_code, 
 				a.user_last_login, 
+				a.user_photo, 
 				a.created_by,
 				b.user_name,
 				a.created_at, 
@@ -211,6 +222,7 @@ func (repository *UserRepositoryImpl) FindAll(ctx context.Context, tx *sql.Tx) [
 			&user.UserTokenRefreshCheck,
 			&user.UserLangCode,
 			&user.UserLastLoginCheck,
+			&user.UserPhotoCheck,
 			&user.CreatedByCheck,
 			&user.CreatedByNameCheck,
 			&user.CreatedAtCheck,
@@ -227,6 +239,9 @@ func (repository *UserRepositoryImpl) FindAll(ctx context.Context, tx *sql.Tx) [
 		}
 		if user.UserLastLoginCheck.Valid {
 			user.UserLastLogin = user.UserLastLoginCheck.String
+		}
+		if user.UserPhotoCheck.Valid {
+			user.UserPhoto = user.UserPhotoCheck.String
 		}
 		if user.CreatedByCheck.Valid {
 			user.CreatedBy = int(user.CreatedByCheck.Int32)
