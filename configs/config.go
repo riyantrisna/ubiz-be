@@ -18,6 +18,7 @@ type Config struct {
 			DbPort          int    `mapstructure:"DBPORT"`
 			DbUser          string `mapstructure:"DBUSER"`
 			DbPass          string `mapstructure:"DBPASS"`
+			DbName          string `mapstructure:"DBNAME"`
 			MaxIdleConns    int    `mapstructure:"MAXIDLECONNS"`
 			MaxOpenConns    int    `mapstructure:"MAXOPENCONNS"`
 			ConnMaxLifeTime int    `mapstructure:"CONNMAXLIFETIME"`
