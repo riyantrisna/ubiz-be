@@ -3,12 +3,11 @@ package main
 import (
 	"collapp/configs"
 	"collapp/infras"
-	"collapp/middleware"
 	"collapp/module/lang"
 	"collapp/module/translation"
 	"collapp/module/user"
+	httpTransport "collapp/transport/http"
 
-	"github.com/gin-gonic/gin"
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/spf13/viper"
 )
@@ -25,8 +24,7 @@ func main() {
 		panic(err)
 	}
 
-	router := gin.Default()
-	router.Use(middleware.CORS())
+	router := httpTransport.Setup()
 
 	db := infras.NewMysqlDB(config)
 	api := router.Group("/api/v1")
