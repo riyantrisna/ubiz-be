@@ -1,8 +1,8 @@
 package main
 
 import (
-	"collapp/app"
 	"collapp/configs"
+	"collapp/infras"
 	"collapp/middleware"
 	"collapp/module/lang"
 	"collapp/module/translation"
@@ -28,7 +28,7 @@ func main() {
 	router := gin.Default()
 	router.Use(middleware.CORS())
 
-	db := app.NewDB()
+	db := infras.NewMysqlDB(config)
 	api := router.Group("/api/v1")
 
 	user.Router(db, api)
