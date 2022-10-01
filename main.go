@@ -17,6 +17,7 @@ func main() {
 	// Initialize config
 	config = configs.Get()
 
+	// prepare http router
 	router := httpTransport.Setup()
 
 	db := infras.NewMysqlDB(config)
