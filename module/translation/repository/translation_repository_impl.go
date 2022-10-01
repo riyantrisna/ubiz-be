@@ -8,10 +8,13 @@ import (
 )
 
 type TranslationRepositoryImpl struct {
+	DB *sql.DB
 }
 
-func NewTranslationRepository() TranslationRepository {
-	return &TranslationRepositoryImpl{}
+func NewTranslationRepository(db *sql.DB) TranslationRepository {
+	return &TranslationRepositoryImpl{
+		DB: db,
+	}
 }
 
 func (repository *TranslationRepositoryImpl) Save(ctx context.Context, tx *sql.Tx, translation model.TranslationCreateRequest) model.Translation {

@@ -14,7 +14,7 @@ type LangServiceImpl struct {
 }
 
 func NewLangService(DB *sql.DB) LangService {
-	langRepository := repository.NewLangRepository()
+	langRepository := repository.NewLangRepository(DB)
 
 	return &LangServiceImpl{
 		LangRepository: langRepository,

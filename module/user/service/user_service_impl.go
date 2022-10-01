@@ -14,7 +14,7 @@ type UserServiceImpl struct {
 }
 
 func NewUserService(DB *sql.DB) UserService {
-	userRepository := repository.NewUserRepository()
+	userRepository := repository.NewUserRepository(DB)
 
 	return &UserServiceImpl{
 		UserRepository: userRepository,

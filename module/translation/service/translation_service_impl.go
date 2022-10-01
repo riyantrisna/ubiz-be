@@ -14,7 +14,7 @@ type TranslationServiceImpl struct {
 }
 
 func NewTranslationService(DB *sql.DB) TranslationService {
-	translationRepository := repository.NewTranslationRepository()
+	translationRepository := repository.NewTranslationRepository(DB)
 
 	return &TranslationServiceImpl{
 		TranslationRepository: translationRepository,

@@ -8,10 +8,13 @@ import (
 )
 
 type LangRepositoryImpl struct {
+	DB *sql.DB
 }
 
-func NewLangRepository() LangRepository {
-	return &LangRepositoryImpl{}
+func NewLangRepository(db *sql.DB) LangRepository {
+	return &LangRepositoryImpl{
+		DB: db,
+	}
 }
 
 func (repository *LangRepositoryImpl) Save(ctx context.Context, tx *sql.Tx, lang model.LangCreateRequest) model.Lang {
