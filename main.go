@@ -9,7 +9,6 @@ import (
 	httpTransport "collapp/transport/http"
 
 	_ "github.com/go-sql-driver/mysql"
-	"github.com/spf13/viper"
 )
 
 var config *configs.Config
@@ -17,12 +16,6 @@ var config *configs.Config
 func main() {
 	// Initialize config
 	config = configs.Get()
-
-	viper.SetConfigFile(`config.json`)
-	err := viper.ReadInConfig()
-	if err != nil {
-		panic(err)
-	}
 
 	router := httpTransport.Setup()
 
