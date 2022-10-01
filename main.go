@@ -33,9 +33,5 @@ func main() {
 	lang.Router(db, api)
 	translation.Router(db, api)
 
-	appPort := viper.GetString("address")
-	if appPort == "" {
-		appPort = ":9090"
-	}
-	router.Run(appPort)
+	router.Run(config.Address)
 }
