@@ -6,11 +6,9 @@ import (
 	_ "github.com/go-sql-driver/mysql"
 )
 
-var config *configs.Config
-
 func main() {
 	// Initialize config
-	config = configs.Get()
+	_ = configs.Get()
 
 	http := InitializeEvent()
 	http.SetupAndServe()
