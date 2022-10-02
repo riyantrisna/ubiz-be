@@ -10,6 +10,6 @@ func main() {
 	// Initialize config
 	_ = configs.Get()
 
-	http := InitializeEvent()
+	http := InitializeService()
 	http.SetupAndServe()
 }

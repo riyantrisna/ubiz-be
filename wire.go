@@ -81,7 +81,7 @@ var httpServer = wire.NewSet(
 	httpTransport.NewHTTP,
 )
 
-func InitializeEvent() *httpTransport.HTTP {
+func InitializeService() *httpTransport.HTTP {
 	wire.Build(
 		// configurations
 		configurations,
