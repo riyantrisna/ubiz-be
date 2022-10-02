@@ -23,10 +23,8 @@ type LangHandler struct {
 	config             *configs.Config
 }
 
-func NewLangHandler(db *sql.DB, cfg *configs.Config) LangHandler {
+func NewLangHandler(db *sql.DB, cfg *configs.Config, langService service.LangService, translationService translationService.TranslationService) LangHandler {
 	validate := validator.New()
-	langService := service.NewLangService(db)
-	translationService := translationService.NewTranslationService(db)
 	return LangHandler{
 		LangService:        langService,
 		Validate:           validate,

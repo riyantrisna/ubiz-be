@@ -25,14 +25,12 @@ type UserHandler struct {
 	config             *configs.Config
 }
 
-func NewUserHandler(db *sql.DB, cfg *configs.Config) UserHandler {
+func NewUserHandler(db *sql.DB, cfg *configs.Config, userSvc service.UserService, translationSvc translationService.TranslationService) UserHandler {
 	validate := validator.New()
-	userService := service.NewUserService(db)
-	translationService := translationService.NewTranslationService(db)
 	return UserHandler{
-		UserService:        userService,
+		UserService:        userSvc,
 		Validate:           validate,
-		TranslationService: translationService,
+		TranslationService: translationSvc,
 		config:             cfg,
 	}
 }

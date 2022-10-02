@@ -20,9 +20,8 @@ type TranslationHandler struct {
 	config             *configs.Config
 }
 
-func NewTranslationHandler(db *sql.DB, cfg *configs.Config) TranslationHandler {
+func NewTranslationHandler(db *sql.DB, cfg *configs.Config, translationService service.TranslationService) TranslationHandler {
 	validate := validator.New()
-	translationService := service.NewTranslationService(db)
 	return TranslationHandler{
 		TranslationService: translationService,
 		Validate:           validate,
