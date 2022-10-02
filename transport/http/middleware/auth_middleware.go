@@ -1,16 +1,15 @@
 package middleware
 
 import (
+	"collapp/configs"
 	"collapp/helper"
 	translationService "collapp/module/translation/service"
 	"collapp/module/user/service"
-	"database/sql"
 	"net/http"
 	"strings"
 
 	"github.com/dgrijalva/jwt-go"
 	"github.com/gin-gonic/gin"
-	"github.com/spf13/viper"
 )
 
 type Claims struct {
@@ -21,18 +20,31 @@ type Claims struct {
 	jwt.StandardClaims
 }
 
-func Auth(db *sql.DB) gin.HandlerFunc {
-	return func(context *gin.Context) {
-		translationService := translationService.NewTranslationService(db)
+type AuthMiddleware struct {
+	config             *configs.Config
+	translationService translationService.TranslationService
+	userService        service.UserService
+}
 
-		jwtKey := []byte(viper.GetString(`jwt.key`))
-		defaultLang := viper.GetString(`defaultLang`)
+func NewAuthMiddleware(cfg *configs.Config, translationService translationService.TranslationService, userService service.UserService) AuthMiddleware {
+	return AuthMiddleware{
+		config:             cfg,
+		translationService: translationService,
+		userService:        userService,
+	}
+}
+
+func (a *AuthMiddleware) Auth() gin.HandlerFunc {
+	return func(context *gin.Context) {
+
+		jwtKey := []byte(a.config.JWT.Key)
+		defaultLang := a.config.DefaultLang
 
 		reqToken := context.Request.Header.Get("Authorization")
 		if reqToken == "" {
 			webResponse := helper.WebResponse{
 				Code:   http.StatusUnauthorized,
-				Status: translationService.Translation(context, "unauthorized", defaultLang),
+				Status: a.translationService.Translation(context, "unauthorized", defaultLang),
 			}
 
 			context.Writer.Header().Add("Content-Type", "application/json")
@@ -53,7 +65,7 @@ func Auth(db *sql.DB) gin.HandlerFunc {
 		if !tkn.Valid {
 			webResponse := helper.WebResponse{
 				Code:   http.StatusUnauthorized,
-				Status: translationService.Translation(context, "unauthorized", defaultLang),
+				Status: a.translationService.Translation(context, "unauthorized", defaultLang),
 			}
 
 			context.Writer.Header().Add("Content-Type", "application/json")
@@ -62,8 +74,7 @@ func Auth(db *sql.DB) gin.HandlerFunc {
 			return
 		}
 
-		userService := service.NewUserService(db)
-		userResponse := service.UserService.FindById(userService, context.Request.Context(), claims.UserId)
+		userResponse := a.userService.FindById(context.Request.Context(), claims.UserId)
 
 		if userResponse.UserToken == reqToken {
 			context.Set("user_id", claims.UserId)
@@ -74,7 +85,7 @@ func Auth(db *sql.DB) gin.HandlerFunc {
 		} else {
 			webResponse := helper.WebResponse{
 				Code:   http.StatusUnauthorized,
-				Status: translationService.Translation(context, "unauthorized", defaultLang),
+				Status: a.translationService.Translation(context, "unauthorized", defaultLang),
 			}
 
 			context.Writer.Header().Add("Content-Type", "application/json")

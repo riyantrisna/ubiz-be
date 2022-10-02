@@ -13,11 +13,9 @@ type UserServiceImpl struct {
 	DB             *sql.DB
 }
 
-func NewUserService(DB *sql.DB) UserService {
-	userRepository := repository.NewUserRepository()
-
+func NewUserService(DB *sql.DB, userRepo repository.UserRepository) UserService {
 	return &UserServiceImpl{
-		UserRepository: userRepository,
+		UserRepository: userRepo,
 		DB:             DB,
 	}
 }

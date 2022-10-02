@@ -1,11 +1,12 @@
-package controller
+package handler
 
 import (
+	"collapp/configs"
 	"collapp/helper"
-	"collapp/middleware"
 	translationService "collapp/module/translation/service"
 	"collapp/module/user/model"
 	"collapp/module/user/service"
+	"collapp/transport/http/middleware"
 	"database/sql"
 	"net/http"
 	"strconv"
@@ -14,31 +15,30 @@ import (
 	"github.com/dgrijalva/jwt-go"
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator/v10"
-	"github.com/spf13/viper"
 	"golang.org/x/crypto/bcrypt"
 )
 
-type UserControllerImpl struct {
+type UserHandler struct {
 	UserService        service.UserService
 	Validate           *validator.Validate
 	TranslationService translationService.TranslationService
+	config             *configs.Config
 }
 
-func NewUserController(db *sql.DB) UserController {
+func NewUserHandler(db *sql.DB, cfg *configs.Config, userSvc service.UserService, translationSvc translationService.TranslationService) UserHandler {
 	validate := validator.New()
-	userService := service.NewUserService(db)
-	translationService := translationService.NewTranslationService(db)
-	return &UserControllerImpl{
-		UserService:        userService,
+	return UserHandler{
+		UserService:        userSvc,
 		Validate:           validate,
-		TranslationService: translationService,
+		TranslationService: translationSvc,
+		config:             cfg,
 	}
 }
 
-func (controller *UserControllerImpl) Create(context *gin.Context) {
+func (h *UserHandler) Create(context *gin.Context) {
 	payloadJwt := helper.PayloadJwt(context)
 
-	password := []byte(viper.GetString("defaultPassword"))
+	password := []byte(h.config.DefaultPassword)
 
 	userCreateRequest := model.UserCreateRequest{}
 	context.Bind(&userCreateRequest)
@@ -53,11 +53,11 @@ func (controller *UserControllerImpl) Create(context *gin.Context) {
 
 	userCreateRequest.UserPassword = string(hashedPassword)
 
-	err = controller.Validate.Struct(userCreateRequest)
+	err = h.Validate.Struct(userCreateRequest)
 	if err != nil {
 		webResponse := helper.WebResponse{
 			Code:   http.StatusBadRequest,
-			Status: controller.TranslationService.Translation(context, "bad_request", payloadJwt.UserLangCode),
+			Status: h.TranslationService.Translation(context, "bad_request", payloadJwt.UserLangCode),
 			Data:   err.Error(),
 		}
 
@@ -67,7 +67,7 @@ func (controller *UserControllerImpl) Create(context *gin.Context) {
 	}
 
 	if userCreateRequest.UserPhoto != nil {
-		var pathFile = viper.GetString("files.photo")
+		var pathFile = h.config.Files.Photo
 		var requestFile = "user_photo"
 
 		fileName, err := helper.UploadFile(context, requestFile, pathFile)
@@ -75,7 +75,7 @@ func (controller *UserControllerImpl) Create(context *gin.Context) {
 		if err != nil {
 			webResponse := helper.WebResponse{
 				Code:   http.StatusInternalServerError,
-				Status: controller.TranslationService.Translation(context, "internal_server_error", payloadJwt.UserLangCode) + " " + controller.TranslationService.Translation(context, "file_upload_failed", payloadJwt.UserLangCode),
+				Status: h.TranslationService.Translation(context, "internal_server_error", payloadJwt.UserLangCode) + " " + h.TranslationService.Translation(context, "file_upload_failed", payloadJwt.UserLangCode),
 				Data:   nil,
 			}
 
@@ -85,10 +85,10 @@ func (controller *UserControllerImpl) Create(context *gin.Context) {
 		}
 	}
 
-	userResponse := controller.UserService.Create(context, userCreateRequest)
+	userResponse := h.UserService.Create(context, userCreateRequest)
 	webResponse := helper.WebResponse{
 		Code:   200,
-		Status: controller.TranslationService.Translation(context, "success_create_user", payloadJwt.UserLangCode),
+		Status: h.TranslationService.Translation(context, "success_create_user", payloadJwt.UserLangCode),
 		Data:   userResponse,
 	}
 
@@ -96,7 +96,7 @@ func (controller *UserControllerImpl) Create(context *gin.Context) {
 	context.JSON(200, webResponse)
 }
 
-func (controller *UserControllerImpl) Update(context *gin.Context) {
+func (h *UserHandler) Update(context *gin.Context) {
 	payloadJwt := helper.PayloadJwt(context)
 
 	userUpdateRequest := model.UserUpdateRequest{}
@@ -113,11 +113,11 @@ func (controller *UserControllerImpl) Update(context *gin.Context) {
 
 	userUpdateRequest.UserId = id
 
-	err = controller.Validate.Struct(userUpdateRequest)
+	err = h.Validate.Struct(userUpdateRequest)
 	if err != nil {
 		webResponse := helper.WebResponse{
 			Code:   http.StatusBadRequest,
-			Status: controller.TranslationService.Translation(context, "bad_request", payloadJwt.UserLangCode),
+			Status: h.TranslationService.Translation(context, "bad_request", payloadJwt.UserLangCode),
 			Data:   err.Error(),
 		}
 
@@ -126,7 +126,7 @@ func (controller *UserControllerImpl) Update(context *gin.Context) {
 		return
 	}
 
-	var pathFile = viper.GetString("files.photo")
+	var pathFile = h.config.Files.Photo
 
 	if userUpdateRequest.UserPhoto != nil {
 		var requestFile = "user_photo"
@@ -136,7 +136,7 @@ func (controller *UserControllerImpl) Update(context *gin.Context) {
 		if err != nil {
 			webResponse := helper.WebResponse{
 				Code:   http.StatusInternalServerError,
-				Status: controller.TranslationService.Translation(context, "internal_server_error", payloadJwt.UserLangCode) + " " + controller.TranslationService.Translation(context, "file_upload_failed", payloadJwt.UserLangCode),
+				Status: h.TranslationService.Translation(context, "internal_server_error", payloadJwt.UserLangCode) + " " + h.TranslationService.Translation(context, "file_upload_failed", payloadJwt.UserLangCode),
 				Data:   nil,
 			}
 
@@ -146,7 +146,7 @@ func (controller *UserControllerImpl) Update(context *gin.Context) {
 		}
 	}
 
-	userResponse, oldPhoto := controller.UserService.Update(context, userUpdateRequest)
+	userResponse, oldPhoto := h.UserService.Update(context, userUpdateRequest)
 
 	if userUpdateRequest.UserPhoto != nil && oldPhoto != "" {
 		helper.DeleteFile(oldPhoto, pathFile)
@@ -155,7 +155,7 @@ func (controller *UserControllerImpl) Update(context *gin.Context) {
 	if userResponse.UserId != 0 {
 		webResponse := helper.WebResponse{
 			Code:   200,
-			Status: controller.TranslationService.Translation(context, "success_update_user", payloadJwt.UserLangCode),
+			Status: h.TranslationService.Translation(context, "success_update_user", payloadJwt.UserLangCode),
 			Data:   userResponse,
 		}
 
@@ -164,7 +164,7 @@ func (controller *UserControllerImpl) Update(context *gin.Context) {
 	} else {
 		webResponse := helper.WebResponse{
 			Code:   http.StatusNotFound,
-			Status: controller.TranslationService.Translation(context, "data_not_found", payloadJwt.UserLangCode),
+			Status: h.TranslationService.Translation(context, "data_not_found", payloadJwt.UserLangCode),
 			Data:   nil,
 		}
 
@@ -173,7 +173,7 @@ func (controller *UserControllerImpl) Update(context *gin.Context) {
 	}
 }
 
-func (controller *UserControllerImpl) Delete(context *gin.Context) {
+func (h *UserHandler) Delete(context *gin.Context) {
 	payloadJwt := helper.PayloadJwt(context)
 
 	userDeleteRequest := model.UserDeleteRequest{}
@@ -191,12 +191,12 @@ func (controller *UserControllerImpl) Delete(context *gin.Context) {
 		currentTime := time.Now()
 		userDeleteRequest.DeletedAt = currentTime.Format("2006-01-02 15:04:05")
 
-		userResponse := controller.UserService.SoftDelete(context, userDeleteRequest)
+		userResponse := h.UserService.SoftDelete(context, userDeleteRequest)
 
 		if userResponse.UserId != 0 {
 			webResponse := helper.WebResponse{
 				Code:   200,
-				Status: controller.TranslationService.Translation(context, "success_delete_user", payloadJwt.UserLangCode),
+				Status: h.TranslationService.Translation(context, "success_delete_user", payloadJwt.UserLangCode),
 			}
 
 			context.Writer.Header().Add("Content-Type", "application/json")
@@ -204,7 +204,7 @@ func (controller *UserControllerImpl) Delete(context *gin.Context) {
 		} else {
 			webResponse := helper.WebResponse{
 				Code:   http.StatusNotFound,
-				Status: controller.TranslationService.Translation(context, "data_not_found", payloadJwt.UserLangCode),
+				Status: h.TranslationService.Translation(context, "data_not_found", payloadJwt.UserLangCode),
 				Data:   nil,
 			}
 
@@ -212,16 +212,16 @@ func (controller *UserControllerImpl) Delete(context *gin.Context) {
 			context.JSON(http.StatusNotFound, webResponse)
 		}
 	} else {
-		userResponse := controller.UserService.Delete(context, id)
+		userResponse := h.UserService.Delete(context, id)
 
 		if userResponse.UserId != 0 {
 			if userResponse.UserPhoto != "" {
-				var pathFile = viper.GetString("files.photo")
+				var pathFile = h.config.Files.Photo
 				helper.DeleteFile(userResponse.UserPhoto, pathFile)
 			}
 			webResponse := helper.WebResponse{
 				Code:   200,
-				Status: controller.TranslationService.Translation(context, "success_delete_user", payloadJwt.UserLangCode),
+				Status: h.TranslationService.Translation(context, "success_delete_user", payloadJwt.UserLangCode),
 			}
 
 			context.Writer.Header().Add("Content-Type", "application/json")
@@ -229,7 +229,7 @@ func (controller *UserControllerImpl) Delete(context *gin.Context) {
 		} else {
 			webResponse := helper.WebResponse{
 				Code:   http.StatusNotFound,
-				Status: controller.TranslationService.Translation(context, "data_not_found", payloadJwt.UserLangCode),
+				Status: h.TranslationService.Translation(context, "data_not_found", payloadJwt.UserLangCode),
 				Data:   nil,
 			}
 
@@ -239,19 +239,19 @@ func (controller *UserControllerImpl) Delete(context *gin.Context) {
 	}
 }
 
-func (controller *UserControllerImpl) FindById(context *gin.Context) {
+func (h *UserHandler) FindById(context *gin.Context) {
 	payloadJwt := helper.PayloadJwt(context)
 
 	userId := context.Param("userId")
 	id, err := strconv.Atoi(userId)
 	helper.PanicIfError(err)
 
-	userResponse := controller.UserService.FindById(context, id)
+	userResponse := h.UserService.FindById(context, id)
 
 	if userResponse.UserId != 0 {
 		webResponse := helper.WebResponse{
 			Code:   200,
-			Status: controller.TranslationService.Translation(context, "success_get_user", payloadJwt.UserLangCode),
+			Status: h.TranslationService.Translation(context, "success_get_user", payloadJwt.UserLangCode),
 			Data:   userResponse,
 		}
 
@@ -260,7 +260,7 @@ func (controller *UserControllerImpl) FindById(context *gin.Context) {
 	} else {
 		webResponse := helper.WebResponse{
 			Code:   http.StatusNotFound,
-			Status: controller.TranslationService.Translation(context, "data_not_found", payloadJwt.UserLangCode),
+			Status: h.TranslationService.Translation(context, "data_not_found", payloadJwt.UserLangCode),
 			Data:   nil,
 		}
 
@@ -269,15 +269,15 @@ func (controller *UserControllerImpl) FindById(context *gin.Context) {
 	}
 }
 
-func (controller *UserControllerImpl) FindAll(context *gin.Context) {
+func (h *UserHandler) FindAll(context *gin.Context) {
 	payloadJwt := helper.PayloadJwt(context)
 
-	userResponses := controller.UserService.FindAll(context)
+	userResponses := h.UserService.FindAll(context)
 
 	if len(userResponses) > 0 {
 		webResponse := helper.WebResponse{
 			Code:   200,
-			Status: controller.TranslationService.Translation(context, "success_get_user", payloadJwt.UserLangCode),
+			Status: h.TranslationService.Translation(context, "success_get_user", payloadJwt.UserLangCode),
 			Data:   userResponses,
 		}
 
@@ -286,7 +286,7 @@ func (controller *UserControllerImpl) FindAll(context *gin.Context) {
 	} else {
 		webResponse := helper.WebResponse{
 			Code:   http.StatusNotFound,
-			Status: controller.TranslationService.Translation(context, "data_not_found", payloadJwt.UserLangCode),
+			Status: h.TranslationService.Translation(context, "data_not_found", payloadJwt.UserLangCode),
 			Data:   nil,
 		}
 
@@ -295,19 +295,19 @@ func (controller *UserControllerImpl) FindAll(context *gin.Context) {
 	}
 }
 
-func (controller *UserControllerImpl) Login(context *gin.Context) {
-	jwtKey := []byte(viper.GetString(`jwt.key`))
-	defaultLang := viper.GetString(`defaultLang`)
+func (h *UserHandler) Login(context *gin.Context) {
+	jwtKey := []byte(h.config.JWT.Key)
+	defaultLang := h.config.DefaultLang
 
 	currentTime := time.Now()
 	userLoginRequest := model.UserLoginRequest{}
 	context.Bind(&userLoginRequest)
 
-	err := controller.Validate.Struct(userLoginRequest)
+	err := h.Validate.Struct(userLoginRequest)
 	if err != nil {
 		webResponse := helper.WebResponse{
 			Code:   http.StatusBadRequest,
-			Status: controller.TranslationService.Translation(context, "bad_request", defaultLang),
+			Status: h.TranslationService.Translation(context, "bad_request", defaultLang),
 			Data:   err.Error(),
 		}
 
@@ -316,19 +316,19 @@ func (controller *UserControllerImpl) Login(context *gin.Context) {
 		return
 	}
 
-	userCheck := controller.UserService.FindByEmail(context, userLoginRequest.UserEmail)
+	userCheck := h.UserService.FindByEmail(context, userLoginRequest.UserEmail)
 
 	err = bcrypt.CompareHashAndPassword([]byte(userCheck.UserPassword), []byte(userLoginRequest.UserPassword))
 
 	if err == nil {
 
-		userResponse := controller.UserService.FindById(context, userCheck.UserId)
+		userResponse := h.UserService.FindById(context, userCheck.UserId)
 
-		expired := viper.GetInt(`jwt.expired`)
-		expiredRefresh := viper.GetInt(`jwt.expiredRefresh`)
+		expired := h.config.JWT.Expired
+		expiredRefresh := h.config.JWT.ExpiredRefresh
 
 		// start cretae JWT
-		expirationTime := time.Now().Add(time.Duration(expired) * time.Minute)
+		expirationTime := time.Now().Add(expired)
 		claims := middleware.Claims{
 			UserId:       userResponse.UserId,
 			UserName:     userResponse.UserName,
@@ -344,7 +344,7 @@ func (controller *UserControllerImpl) Login(context *gin.Context) {
 		if err != nil {
 			webResponse := helper.WebResponse{
 				Code:   http.StatusInternalServerError,
-				Status: controller.TranslationService.Translation(context, "internal_server_error", defaultLang),
+				Status: h.TranslationService.Translation(context, "internal_server_error", defaultLang),
 				Data:   err,
 			}
 
@@ -353,7 +353,7 @@ func (controller *UserControllerImpl) Login(context *gin.Context) {
 			return
 		}
 
-		expirationTimeRefresh := time.Now().Add(time.Duration(expiredRefresh) * time.Minute)
+		expirationTimeRefresh := time.Now().Add(expiredRefresh)
 		claimsRefresh := middleware.Claims{
 			UserId:       userResponse.UserId,
 			UserName:     userResponse.UserName,
@@ -369,7 +369,7 @@ func (controller *UserControllerImpl) Login(context *gin.Context) {
 		if err != nil {
 			webResponse := helper.WebResponse{
 				Code:   http.StatusInternalServerError,
-				Status: controller.TranslationService.Translation(context, "internal_server_error", defaultLang),
+				Status: h.TranslationService.Translation(context, "internal_server_error", defaultLang),
 				Data:   err,
 			}
 
@@ -387,13 +387,13 @@ func (controller *UserControllerImpl) Login(context *gin.Context) {
 		userData.UserToken = tokenString
 		userData.UserTokenRefresh = tokenStringRefresh
 		userData.UserLastLogin = currentTime.Format("2006-01-02 15:04:05")
-		userTokenUpdateResponse := controller.UserService.UpdateToken(context, userData)
+		userTokenUpdateResponse := h.UserService.UpdateToken(context, userData)
 		//end create JWT
 
 		if userTokenUpdateResponse.UserEmail != "" {
 			webResponse := helper.WebResponse{
 				Code:   200,
-				Status: controller.TranslationService.Translation(context, "success_login", defaultLang),
+				Status: h.TranslationService.Translation(context, "success_login", defaultLang),
 				Data:   userResponse,
 			}
 			context.Writer.Header().Add("Content-Type", "application/json")
@@ -401,7 +401,7 @@ func (controller *UserControllerImpl) Login(context *gin.Context) {
 		} else {
 			webResponse := helper.WebResponse{
 				Code:   http.StatusInternalServerError,
-				Status: controller.TranslationService.Translation(context, "internal_server_error", defaultLang),
+				Status: h.TranslationService.Translation(context, "internal_server_error", defaultLang),
 				Data:   err,
 			}
 
@@ -411,7 +411,7 @@ func (controller *UserControllerImpl) Login(context *gin.Context) {
 	} else {
 		webResponse := helper.WebResponse{
 			Code:   http.StatusUnauthorized,
-			Status: controller.TranslationService.Translation(context, "worng_email_or_password", defaultLang),
+			Status: h.TranslationService.Translation(context, "worng_email_or_password", defaultLang),
 		}
 
 		context.Writer.Header().Add("Content-Type", "application/json")
@@ -419,8 +419,8 @@ func (controller *UserControllerImpl) Login(context *gin.Context) {
 	}
 }
 
-func (controller *UserControllerImpl) RefreshToken(context *gin.Context) {
-	jwtKey := []byte(viper.GetString(`jwt.key`))
+func (h *UserHandler) RefreshToken(context *gin.Context) {
+	jwtKey := []byte(h.config.JWT.Key)
 
 	currentTime := time.Now()
 	userRefreshToken := context.Param("userRefreshToken")
@@ -434,7 +434,7 @@ func (controller *UserControllerImpl) RefreshToken(context *gin.Context) {
 	if !tkn.Valid {
 		webResponse := helper.WebResponse{
 			Code:   http.StatusUnauthorized,
-			Status: controller.TranslationService.Translation(context, "unauthorized", claims.UserLangCode),
+			Status: h.TranslationService.Translation(context, "unauthorized", claims.UserLangCode),
 		}
 
 		context.Writer.Header().Add("Content-Type", "application/json")
@@ -442,17 +442,17 @@ func (controller *UserControllerImpl) RefreshToken(context *gin.Context) {
 		return
 	}
 
-	userCheck := controller.UserService.FindByTokenRefresh(context, userRefreshToken)
+	userCheck := h.UserService.FindByTokenRefresh(context, userRefreshToken)
 
 	if userCheck.UserId != 0 {
 
-		userResponse := controller.UserService.FindById(context, userCheck.UserId)
+		userResponse := h.UserService.FindById(context, userCheck.UserId)
 
-		expired := viper.GetInt(`jwt.expired`)
-		expiredRefresh := viper.GetInt(`jwt.expiredRefresh`)
+		expired := h.config.JWT.Expired
+		expiredRefresh := h.config.JWT.ExpiredRefresh
 
 		// start cretae JWT
-		expirationTime := time.Now().Add(time.Duration(expired) * time.Minute)
+		expirationTime := time.Now().Add(expired)
 		claims := middleware.Claims{
 			UserId:       userResponse.UserId,
 			UserName:     userResponse.UserName,
@@ -468,7 +468,7 @@ func (controller *UserControllerImpl) RefreshToken(context *gin.Context) {
 		if err != nil {
 			webResponse := helper.WebResponse{
 				Code:   http.StatusInternalServerError,
-				Status: controller.TranslationService.Translation(context, "internal_server_error", claims.UserLangCode),
+				Status: h.TranslationService.Translation(context, "internal_server_error", claims.UserLangCode),
 				Data:   err,
 			}
 
@@ -477,7 +477,7 @@ func (controller *UserControllerImpl) RefreshToken(context *gin.Context) {
 			return
 		}
 
-		expirationTimeRefresh := time.Now().Add(time.Duration(expiredRefresh) * time.Minute)
+		expirationTimeRefresh := time.Now().Add(expiredRefresh)
 		claimsRefresh := middleware.Claims{
 			UserId:       userResponse.UserId,
 			UserName:     userResponse.UserName,
@@ -493,7 +493,7 @@ func (controller *UserControllerImpl) RefreshToken(context *gin.Context) {
 		if err != nil {
 			webResponse := helper.WebResponse{
 				Code:   http.StatusInternalServerError,
-				Status: controller.TranslationService.Translation(context, "internal_server_error", claims.UserLangCode),
+				Status: h.TranslationService.Translation(context, "internal_server_error", claims.UserLangCode),
 				Data:   err,
 			}
 
@@ -511,13 +511,13 @@ func (controller *UserControllerImpl) RefreshToken(context *gin.Context) {
 		userData.UserToken = tokenString
 		userData.UserTokenRefresh = tokenStringRefresh
 		userData.UserLastLogin = currentTime.Format("2006-01-02 15:04:05")
-		userTokenUpdateResponse := controller.UserService.UpdateToken(context, userData)
+		userTokenUpdateResponse := h.UserService.UpdateToken(context, userData)
 		//end create JWT
 
 		if userTokenUpdateResponse.UserEmail != "" {
 			webResponse := helper.WebResponse{
 				Code:   200,
-				Status: controller.TranslationService.Translation(context, "refresh_token_success", claims.UserLangCode),
+				Status: h.TranslationService.Translation(context, "refresh_token_success", claims.UserLangCode),
 				Data:   userResponse,
 			}
 			context.Writer.Header().Add("Content-Type", "application/json")
@@ -525,7 +525,7 @@ func (controller *UserControllerImpl) RefreshToken(context *gin.Context) {
 		} else {
 			webResponse := helper.WebResponse{
 				Code:   http.StatusInternalServerError,
-				Status: controller.TranslationService.Translation(context, "internal_server_error", claims.UserLangCode),
+				Status: h.TranslationService.Translation(context, "internal_server_error", claims.UserLangCode),
 				Data:   err,
 			}
 
@@ -535,7 +535,7 @@ func (controller *UserControllerImpl) RefreshToken(context *gin.Context) {
 	} else {
 		webResponse := helper.WebResponse{
 			Code:   http.StatusUnauthorized,
-			Status: controller.TranslationService.Translation(context, "unauthorized", claims.UserLangCode),
+			Status: h.TranslationService.Translation(context, "unauthorized", claims.UserLangCode),
 		}
 
 		context.Writer.Header().Add("Content-Type", "application/json")
@@ -543,7 +543,7 @@ func (controller *UserControllerImpl) RefreshToken(context *gin.Context) {
 	}
 }
 
-func (controller *UserControllerImpl) Logout(context *gin.Context) {
+func (h *UserHandler) Logout(context *gin.Context) {
 	payloadJwt := helper.PayloadJwt(context)
 
 	userId := 0
@@ -552,12 +552,12 @@ func (controller *UserControllerImpl) Logout(context *gin.Context) {
 		userId = value.(int)
 	}
 
-	userResponse := controller.UserService.Logout(context, userId)
+	userResponse := h.UserService.Logout(context, userId)
 
 	if userResponse.UserId != 0 {
 		webResponse := helper.WebResponse{
 			Code:   200,
-			Status: controller.TranslationService.Translation(context, "success_logout", payloadJwt.UserLangCode),
+			Status: h.TranslationService.Translation(context, "success_logout", payloadJwt.UserLangCode),
 		}
 
 		context.Writer.Header().Add("Content-Type", "application/json")
@@ -565,7 +565,7 @@ func (controller *UserControllerImpl) Logout(context *gin.Context) {
 	} else {
 		webResponse := helper.WebResponse{
 			Code:   http.StatusNotFound,
-			Status: controller.TranslationService.Translation(context, "data_not_found", payloadJwt.UserLangCode),
+			Status: h.TranslationService.Translation(context, "data_not_found", payloadJwt.UserLangCode),
 			Data:   nil,
 		}
 

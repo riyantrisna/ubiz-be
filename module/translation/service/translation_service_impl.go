@@ -13,11 +13,9 @@ type TranslationServiceImpl struct {
 	DB                    *sql.DB
 }
 
-func NewTranslationService(DB *sql.DB) TranslationService {
-	translationRepository := repository.NewTranslationRepository()
-
+func NewTranslationService(DB *sql.DB, repo repository.TranslationRepository) TranslationService {
 	return &TranslationServiceImpl{
-		TranslationRepository: translationRepository,
+		TranslationRepository: repo,
 		DB:                    DB,
 	}
 }
