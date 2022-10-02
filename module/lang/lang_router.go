@@ -2,7 +2,7 @@ package lang
 
 import (
 	"collapp/configs"
-	"collapp/module/lang/controller"
+	"collapp/module/lang/handler"
 	"collapp/transport/http/middleware"
 	"database/sql"
 
@@ -11,16 +11,16 @@ import (
 
 func Router(db *sql.DB, router *gin.RouterGroup, cfg *configs.Config) {
 
-	langController := controller.NewLangController(db, cfg)
+	langHandler := handler.NewLangHandler(db, cfg)
 	lang := router.Group("/lang")
 
 	lang.Use(middleware.Auth(db, cfg))
 	{
-		lang.GET("/", langController.FindAll)
-		lang.GET("/:langId", langController.FindById)
-		lang.POST("/", langController.Create)
-		lang.PUT("/:langId", langController.Update)
-		lang.DELETE("/:langId", langController.Delete)
+		lang.GET("/", langHandler.FindAll)
+		lang.GET("/:langId", langHandler.FindById)
+		lang.POST("/", langHandler.Create)
+		lang.PUT("/:langId", langHandler.Update)
+		lang.DELETE("/:langId", langHandler.Delete)
 	}
 
 }

@@ -1,10 +1,10 @@
-package controller
+package handler
 
 import (
 	"github.com/gin-gonic/gin"
 )
 
-type TranslationController interface {
+type LangHandler interface {
 	Create(context *gin.Context)
 	Update(context *gin.Context)
 	Delete(context *gin.Context)

@@ -1,4 +1,4 @@
-package controller
+package handler
 
 import (
 	"collapp/configs"
@@ -14,23 +14,23 @@ import (
 	"github.com/go-playground/validator/v10"
 )
 
-type TranslationControllerImpl struct {
+type TranslationHandlerImpl struct {
 	TranslationService service.TranslationService
 	Validate           *validator.Validate
 	config             *configs.Config
 }
 
-func NewTranslationController(db *sql.DB, cfg *configs.Config) TranslationController {
+func NewTranslationHandler(db *sql.DB, cfg *configs.Config) TranslationHandler {
 	validate := validator.New()
 	translationService := service.NewTranslationService(db)
-	return &TranslationControllerImpl{
+	return &TranslationHandlerImpl{
 		TranslationService: translationService,
 		Validate:           validate,
 		config:             cfg,
 	}
 }
 
-func (controller *TranslationControllerImpl) Create(context *gin.Context) {
+func (h *TranslationHandlerImpl) Create(context *gin.Context) {
 	payloadJwt := helper.PayloadJwt(context)
 
 	translationCreateRequest := model.TranslationCreateRequest{}
@@ -41,12 +41,12 @@ func (controller *TranslationControllerImpl) Create(context *gin.Context) {
 	currentTime := time.Now()
 	translationCreateRequest.CreatedAt = currentTime.Format("2006-01-02 15:04:05")
 
-	keyIsExist := controller.TranslationService.CheckKeyTranslationExist(context, translationCreateRequest.TranslationKey)
+	keyIsExist := h.TranslationService.CheckKeyTranslationExist(context, translationCreateRequest.TranslationKey)
 	if keyIsExist {
 		webResponse := helper.WebResponse{
 			Code:   http.StatusBadRequest,
-			Status: controller.TranslationService.Translation(context, "bad_request", payloadJwt.UserLangCode),
-			Data:   controller.TranslationService.Translation(context, "key_translation_is_exist", payloadJwt.UserLangCode) + " (" + translationCreateRequest.TranslationKey + ")",
+			Status: h.TranslationService.Translation(context, "bad_request", payloadJwt.UserLangCode),
+			Data:   h.TranslationService.Translation(context, "key_translation_is_exist", payloadJwt.UserLangCode) + " (" + translationCreateRequest.TranslationKey + ")",
 		}
 
 		context.Writer.Header().Add("Content-Type", "application/json")
@@ -54,11 +54,11 @@ func (controller *TranslationControllerImpl) Create(context *gin.Context) {
 		return
 	}
 
-	err := controller.Validate.Struct(translationCreateRequest)
+	err := h.Validate.Struct(translationCreateRequest)
 	if err != nil {
 		webResponse := helper.WebResponse{
 			Code:   http.StatusBadRequest,
-			Status: controller.TranslationService.Translation(context, "bad_request", payloadJwt.UserLangCode),
+			Status: h.TranslationService.Translation(context, "bad_request", payloadJwt.UserLangCode),
 			Data:   err.Error(),
 		}
 
@@ -67,10 +67,10 @@ func (controller *TranslationControllerImpl) Create(context *gin.Context) {
 		return
 	}
 
-	translationResponse := controller.TranslationService.Create(context, translationCreateRequest)
+	translationResponse := h.TranslationService.Create(context, translationCreateRequest)
 	webResponse := helper.WebResponse{
 		Code:   200,
-		Status: controller.TranslationService.Translation(context, "success_create_translation", payloadJwt.UserLangCode),
+		Status: h.TranslationService.Translation(context, "success_create_translation", payloadJwt.UserLangCode),
 		Data:   translationResponse,
 	}
 
@@ -78,7 +78,7 @@ func (controller *TranslationControllerImpl) Create(context *gin.Context) {
 	context.JSON(200, webResponse)
 }
 
-func (controller *TranslationControllerImpl) Update(context *gin.Context) {
+func (h *TranslationHandlerImpl) Update(context *gin.Context) {
 	payloadJwt := helper.PayloadJwt(context)
 
 	translationUpdateRequest := model.TranslationUpdateRequest{}
@@ -95,11 +95,11 @@ func (controller *TranslationControllerImpl) Update(context *gin.Context) {
 
 	translationUpdateRequest.TranslationId = id
 
-	err = controller.Validate.Struct(translationUpdateRequest)
+	err = h.Validate.Struct(translationUpdateRequest)
 	if err != nil {
 		webResponse := helper.WebResponse{
 			Code:   http.StatusBadRequest,
-			Status: controller.TranslationService.Translation(context, "bad_request", payloadJwt.UserLangCode),
+			Status: h.TranslationService.Translation(context, "bad_request", payloadJwt.UserLangCode),
 			Data:   err.Error(),
 		}
 
@@ -108,12 +108,12 @@ func (controller *TranslationControllerImpl) Update(context *gin.Context) {
 		return
 	}
 
-	translationResponse := controller.TranslationService.Update(context, translationUpdateRequest)
+	translationResponse := h.TranslationService.Update(context, translationUpdateRequest)
 
 	if translationResponse.TranslationId != 0 {
 		webResponse := helper.WebResponse{
 			Code:   200,
-			Status: controller.TranslationService.Translation(context, "success_update_translation", payloadJwt.UserLangCode),
+			Status: h.TranslationService.Translation(context, "success_update_translation", payloadJwt.UserLangCode),
 			Data:   translationResponse,
 		}
 
@@ -122,7 +122,7 @@ func (controller *TranslationControllerImpl) Update(context *gin.Context) {
 	} else {
 		webResponse := helper.WebResponse{
 			Code:   http.StatusNotFound,
-			Status: controller.TranslationService.Translation(context, "data_not_found", payloadJwt.UserLangCode),
+			Status: h.TranslationService.Translation(context, "data_not_found", payloadJwt.UserLangCode),
 			Data:   nil,
 		}
 
@@ -131,19 +131,19 @@ func (controller *TranslationControllerImpl) Update(context *gin.Context) {
 	}
 }
 
-func (controller *TranslationControllerImpl) Delete(context *gin.Context) {
+func (h *TranslationHandlerImpl) Delete(context *gin.Context) {
 	payloadJwt := helper.PayloadJwt(context)
 
 	translationId := context.Param("translationId")
 	id, err := strconv.Atoi(translationId)
 	helper.PanicIfError(err)
 
-	translationResponse := controller.TranslationService.Delete(context, id)
+	translationResponse := h.TranslationService.Delete(context, id)
 
 	if translationResponse.TranslationId != 0 {
 		webResponse := helper.WebResponse{
 			Code:   200,
-			Status: controller.TranslationService.Translation(context, "success_delete_translation", payloadJwt.UserLangCode),
+			Status: h.TranslationService.Translation(context, "success_delete_translation", payloadJwt.UserLangCode),
 		}
 
 		context.Writer.Header().Add("Content-Type", "application/json")
@@ -151,7 +151,7 @@ func (controller *TranslationControllerImpl) Delete(context *gin.Context) {
 	} else {
 		webResponse := helper.WebResponse{
 			Code:   http.StatusNotFound,
-			Status: controller.TranslationService.Translation(context, "data_not_found", payloadJwt.UserLangCode),
+			Status: h.TranslationService.Translation(context, "data_not_found", payloadJwt.UserLangCode),
 			Data:   nil,
 		}
 
@@ -160,19 +160,19 @@ func (controller *TranslationControllerImpl) Delete(context *gin.Context) {
 	}
 }
 
-func (controller *TranslationControllerImpl) FindById(context *gin.Context) {
+func (h *TranslationHandlerImpl) FindById(context *gin.Context) {
 	payloadJwt := helper.PayloadJwt(context)
 
 	translationId := context.Param("translationId")
 	id, err := strconv.Atoi(translationId)
 	helper.PanicIfError(err)
 
-	translationResponse := controller.TranslationService.FindById(context, id)
+	translationResponse := h.TranslationService.FindById(context, id)
 
 	if translationResponse.TranslationId != 0 {
 		webResponse := helper.WebResponse{
 			Code:   200,
-			Status: controller.TranslationService.Translation(context, "success_get_translation", payloadJwt.UserLangCode),
+			Status: h.TranslationService.Translation(context, "success_get_translation", payloadJwt.UserLangCode),
 			Data:   translationResponse,
 		}
 
@@ -181,7 +181,7 @@ func (controller *TranslationControllerImpl) FindById(context *gin.Context) {
 	} else {
 		webResponse := helper.WebResponse{
 			Code:   http.StatusNotFound,
-			Status: controller.TranslationService.Translation(context, "data_not_found", payloadJwt.UserLangCode),
+			Status: h.TranslationService.Translation(context, "data_not_found", payloadJwt.UserLangCode),
 			Data:   nil,
 		}
 
@@ -190,15 +190,15 @@ func (controller *TranslationControllerImpl) FindById(context *gin.Context) {
 	}
 }
 
-func (controller *TranslationControllerImpl) FindAll(context *gin.Context) {
+func (h *TranslationHandlerImpl) FindAll(context *gin.Context) {
 	payloadJwt := helper.PayloadJwt(context)
 
-	translationResponses := controller.TranslationService.FindAll(context)
+	translationResponses := h.TranslationService.FindAll(context)
 
 	if len(translationResponses) > 0 {
 		webResponse := helper.WebResponse{
 			Code:   200,
-			Status: controller.TranslationService.Translation(context, "success_get_translation", payloadJwt.UserLangCode),
+			Status: h.TranslationService.Translation(context, "success_get_translation", payloadJwt.UserLangCode),
 			Data:   translationResponses,
 		}
 
@@ -207,7 +207,7 @@ func (controller *TranslationControllerImpl) FindAll(context *gin.Context) {
 	} else {
 		webResponse := helper.WebResponse{
 			Code:   http.StatusNotFound,
-			Status: controller.TranslationService.Translation(context, "data_not_found", payloadJwt.UserLangCode),
+			Status: h.TranslationService.Translation(context, "data_not_found", payloadJwt.UserLangCode),
 			Data:   nil,
 		}
 

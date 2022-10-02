@@ -2,7 +2,7 @@ package translation
 
 import (
 	"collapp/configs"
-	"collapp/module/translation/controller"
+	"collapp/module/translation/handler"
 	"collapp/transport/http/middleware"
 	"database/sql"
 
@@ -11,16 +11,16 @@ import (
 
 func Router(db *sql.DB, router *gin.RouterGroup, cfg *configs.Config) {
 
-	translationController := controller.NewTranslationController(db, cfg)
+	translationHandler := handler.NewTranslationHandler(db, cfg)
 	translation := router.Group("/translation")
 
 	translation.Use(middleware.Auth(db, cfg))
 	{
-		translation.GET("/", translationController.FindAll)
-		translation.GET("/:translationId", translationController.FindById)
-		translation.POST("/", translationController.Create)
-		translation.PUT("/:translationId", translationController.Update)
-		translation.DELETE("/:translationId", translationController.Delete)
+		translation.GET("/", translationHandler.FindAll)
+		translation.GET("/:translationId", translationHandler.FindById)
+		translation.POST("/", translationHandler.Create)
+		translation.PUT("/:translationId", translationHandler.Update)
+		translation.DELETE("/:translationId", translationHandler.Delete)
 	}
 
 }
