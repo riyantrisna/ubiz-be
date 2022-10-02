@@ -8,6 +8,7 @@ import (
 	"collapp/module/user/service"
 	"collapp/transport/http/middleware"
 	"database/sql"
+	"fmt"
 	"net/http"
 	"strconv"
 	"time"
@@ -241,6 +242,7 @@ func (h *UserHandler) Delete(context *gin.Context) {
 
 func (h *UserHandler) FindById(context *gin.Context) {
 	payloadJwt := helper.PayloadJwt(context)
+	fmt.Println(payloadJwt)
 
 	userId := context.Param("userId")
 	id, err := strconv.Atoi(userId)

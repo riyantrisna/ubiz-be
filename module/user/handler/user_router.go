@@ -1,22 +1,26 @@
 package handler
 
 import (
+	"collapp/transport/http/middleware"
+
 	"github.com/gin-gonic/gin"
 )
 
-func (h *UserHandler) Router(router *gin.RouterGroup) {
+func (h *UserHandler) Router(router *gin.RouterGroup, auth middleware.AuthMiddleware) {
 	users := router.Group("/users")
 
 	users.POST("/login", h.Login)
 	users.GET("/refresh-token/:userRefreshToken", h.RefreshToken)
-	// users.Use(authMiddleware.Auth())
+
+	usersAuth := users.Group("")
+	usersAuth.Use(auth.Auth())
 	{
-		users.GET("/", h.FindAll)
-		users.GET("/:userId", h.FindById)
-		users.POST("/", h.Create)
-		users.PUT("/:userId", h.Update)
-		users.DELETE("/:userId", h.Delete)
-		users.PUT("/logout", h.Logout)
+		usersAuth.GET("/", h.FindAll)
+		usersAuth.GET("/:userId", h.FindById)
+		usersAuth.POST("/", h.Create)
+		usersAuth.PUT("/:userId", h.Update)
+		usersAuth.DELETE("/:userId", h.Delete)
+		usersAuth.PUT("/logout", h.Logout)
 	}
 
 }

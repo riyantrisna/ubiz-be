@@ -4,6 +4,7 @@ import (
 	langHandler "collapp/module/lang/handler"
 	translationHandler "collapp/module/translation/handler"
 	userHandler "collapp/module/user/handler"
+	"collapp/transport/http/middleware"
 
 	"github.com/gin-gonic/gin"
 )
@@ -28,8 +29,8 @@ func NewRouter(handlers ModuleHandlers) Router {
 }
 
 // SetupRoutes sets up all routing for this server.
-func (r *Router) SetupRoutes(routerGroup *gin.RouterGroup) {
-	r.ModuleHandlers.UserHandler.Router(routerGroup)
-	r.ModuleHandlers.TranslationHandler.Router(routerGroup)
-	r.ModuleHandlers.LangHandler.Router(routerGroup)
+func (r *Router) SetupRoutes(routerGroup *gin.RouterGroup, auth middleware.AuthMiddleware) {
+	r.ModuleHandlers.UserHandler.Router(routerGroup, auth)
+	r.ModuleHandlers.TranslationHandler.Router(routerGroup, auth)
+	r.ModuleHandlers.LangHandler.Router(routerGroup, auth)
 }
