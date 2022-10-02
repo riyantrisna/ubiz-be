@@ -1,7 +1,10 @@
 generate:
 	go generate ./...
 
-run: generate
+wire: 
+	wire
+
+run: wire generate
 	go run .
 
-.PHONY: generate run
+.PHONY: generate wire run
