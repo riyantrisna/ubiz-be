@@ -81,7 +81,7 @@ func (h *LangHandler) Update(context *gin.Context) {
 
 	langId := context.Param("langId")
 	id, err := strconv.Atoi(langId)
-	helper.PanicIfError(err)
+	helper.IfError(err)
 
 	langUpdateRequest.LangId = id
 
@@ -128,7 +128,7 @@ func (h *LangHandler) Delete(context *gin.Context) {
 
 	langId := context.Param("langId")
 	id, err := strconv.Atoi(langId)
-	helper.PanicIfError(err)
+	helper.IfError(err)
 
 	langResponse := h.LangService.Delete(context, id)
 
@@ -157,7 +157,7 @@ func (h *LangHandler) FindById(context *gin.Context) {
 
 	langId := context.Param("langId")
 	id, err := strconv.Atoi(langId)
-	helper.PanicIfError(err)
+	helper.IfError(err)
 
 	langResponse := h.LangService.FindById(context, id)
 

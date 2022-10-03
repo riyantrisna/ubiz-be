@@ -22,7 +22,7 @@ func NewTranslationService(DB *sql.DB, repo repository.TranslationRepository) Tr
 
 func (service *TranslationServiceImpl) Create(ctx context.Context, request model.TranslationCreateRequest) model.TranslationResponse {
 	tx, err := service.DB.Begin()
-	helper.PanicIfError(err)
+	helper.IfError(err)
 	defer helper.CommitOrRollback(tx)
 
 	translationData := service.TranslationRepository.Save(ctx, tx, request)
@@ -39,7 +39,7 @@ func (service *TranslationServiceImpl) Create(ctx context.Context, request model
 
 		if res {
 			translationData, err := service.TranslationRepository.FindById(ctx, tx, translationData.TranslationId)
-			helper.PanicIfError(err)
+			helper.IfError(err)
 
 			translationData.TranslationText = service.TranslationRepository.TextFindById(ctx, tx, translationData.TranslationId)
 			return model.ToTranslationResponse(translationData)
@@ -54,7 +54,7 @@ func (service *TranslationServiceImpl) Create(ctx context.Context, request model
 
 func (service *TranslationServiceImpl) Update(ctx context.Context, request model.TranslationUpdateRequest) model.TranslationResponse {
 	tx, err := service.DB.Begin()
-	helper.PanicIfError(err)
+	helper.IfError(err)
 	defer helper.CommitOrRollback(tx)
 
 	translationData, err := service.TranslationRepository.FindById(ctx, tx, request.TranslationId)
@@ -77,7 +77,7 @@ func (service *TranslationServiceImpl) Update(ctx context.Context, request model
 
 		if res {
 			translationData, err := service.TranslationRepository.FindById(ctx, tx, translationData.TranslationId)
-			helper.PanicIfError(err)
+			helper.IfError(err)
 
 			translationData.TranslationText = service.TranslationRepository.TextFindById(ctx, tx, translationData.TranslationId)
 			return model.ToTranslationResponse(translationData)
@@ -91,7 +91,7 @@ func (service *TranslationServiceImpl) Update(ctx context.Context, request model
 
 func (service *TranslationServiceImpl) Delete(ctx context.Context, translationId int) model.TranslationResponse {
 	tx, err := service.DB.Begin()
-	helper.PanicIfError(err)
+	helper.IfError(err)
 	defer helper.CommitOrRollback(tx)
 
 	translationData, err := service.TranslationRepository.FindById(ctx, tx, translationId)
@@ -108,7 +108,7 @@ func (service *TranslationServiceImpl) Delete(ctx context.Context, translationId
 
 func (service *TranslationServiceImpl) FindById(ctx context.Context, translationId int) model.TranslationResponse {
 	tx, err := service.DB.Begin()
-	helper.PanicIfError(err)
+	helper.IfError(err)
 	defer helper.CommitOrRollback(tx)
 
 	translationData, _ := service.TranslationRepository.FindById(ctx, tx, translationId)
@@ -119,7 +119,7 @@ func (service *TranslationServiceImpl) FindById(ctx context.Context, translation
 
 func (service *TranslationServiceImpl) FindAll(ctx context.Context) []model.TranslationResponse {
 	tx, err := service.DB.Begin()
-	helper.PanicIfError(err)
+	helper.IfError(err)
 	defer helper.CommitOrRollback(tx)
 
 	var translationsData = service.TranslationRepository.FindAll(ctx, tx)
@@ -133,7 +133,7 @@ func (service *TranslationServiceImpl) FindAll(ctx context.Context) []model.Tran
 
 func (service *TranslationServiceImpl) Translation(ctx context.Context, key string, langCode string) string {
 	tx, err := service.DB.Begin()
-	helper.PanicIfError(err)
+	helper.IfError(err)
 	defer helper.CommitOrRollback(tx)
 
 	translation := service.TranslationRepository.Translation(ctx, tx, key, langCode)
@@ -143,7 +143,7 @@ func (service *TranslationServiceImpl) Translation(ctx context.Context, key stri
 
 func (service *TranslationServiceImpl) CheckKeyTranslationExist(ctx context.Context, key string) bool {
 	tx, err := service.DB.Begin()
-	helper.PanicIfError(err)
+	helper.IfError(err)
 	defer helper.CommitOrRollback(tx)
 
 	keyIsExsit := service.TranslationRepository.CheckKeyTranslationExist(ctx, tx, key)

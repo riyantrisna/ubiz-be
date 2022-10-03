@@ -45,10 +45,10 @@ func (repository *UserRepositoryImpl) Save(ctx context.Context, tx *sql.Tx, user
 		user.UserPhotoName,
 		user.CreatedBy,
 		user.CreatedAt)
-	helper.PanicIfError(err)
+	helper.IfError(err)
 
 	id, err := result.LastInsertId()
-	helper.PanicIfError(err)
+	helper.IfError(err)
 
 	res := model.User{}
 	res.UserId = int(id)
@@ -75,7 +75,7 @@ func (repository *UserRepositoryImpl) Update(ctx context.Context, tx *sql.Tx, us
 		user.UpdatedBy,
 		user.UpdatedAt,
 		user.UserId)
-	helper.PanicIfError(err)
+	helper.IfError(err)
 
 	res := model.User{}
 	res.UserId = user.UserId
@@ -85,7 +85,7 @@ func (repository *UserRepositoryImpl) Update(ctx context.Context, tx *sql.Tx, us
 func (repository *UserRepositoryImpl) Delete(ctx context.Context, tx *sql.Tx, user model.User) {
 	SQL := `DELETE FROM user WHERE user_id = ?`
 	_, err := tx.ExecContext(ctx, SQL, user.UserId)
-	helper.PanicIfError(err)
+	helper.IfError(err)
 }
 
 func (repository *UserRepositoryImpl) SoftDelete(ctx context.Context, tx *sql.Tx, user model.User) {
@@ -100,7 +100,7 @@ func (repository *UserRepositoryImpl) SoftDelete(ctx context.Context, tx *sql.Tx
 		user.DeletedBy,
 		user.DeletedAt,
 		user.UserId)
-	helper.PanicIfError(err)
+	helper.IfError(err)
 }
 
 func (repository *UserRepositoryImpl) FindById(ctx context.Context, tx *sql.Tx, userId int) (model.User, error) {
@@ -129,7 +129,7 @@ func (repository *UserRepositoryImpl) FindById(ctx context.Context, tx *sql.Tx, 
 				a.user_id = ?
 				AND a.deleted_at IS NULL`
 	rows, err := tx.QueryContext(ctx, SQL, userId)
-	helper.PanicIfError(err)
+	helper.IfError(err)
 	defer rows.Close()
 
 	user := model.User{}
@@ -149,7 +149,7 @@ func (repository *UserRepositoryImpl) FindById(ctx context.Context, tx *sql.Tx, 
 			&user.UpdatedByCheck,
 			&user.UpdatedByNameCheck,
 			&user.UpdatedAtCheck)
-		helper.PanicIfError(err)
+		helper.IfError(err)
 	}
 
 	if user.UserTokenCheck.Valid {
@@ -211,7 +211,7 @@ func (repository *UserRepositoryImpl) FindAll(ctx context.Context, tx *sql.Tx) [
 			WHERE
 				a.deleted_at IS NULL`
 	rows, err := tx.QueryContext(ctx, SQL)
-	helper.PanicIfError(err)
+	helper.IfError(err)
 	defer rows.Close()
 
 	var users []model.User
@@ -232,7 +232,7 @@ func (repository *UserRepositoryImpl) FindAll(ctx context.Context, tx *sql.Tx) [
 			&user.UpdatedByCheck,
 			&user.UpdatedByNameCheck,
 			&user.UpdatedAtCheck)
-		helper.PanicIfError(err)
+		helper.IfError(err)
 
 		if user.UserTokenCheck.Valid {
 			user.UserToken = user.UserTokenCheck.String
@@ -283,7 +283,7 @@ func (repository *UserRepositoryImpl) FindByEmail(ctx context.Context, tx *sql.T
 				user_email = ?
 				AND deleted_at IS NULL`
 	rows, err := tx.QueryContext(ctx, SQL, userEmail)
-	helper.PanicIfError(err)
+	helper.IfError(err)
 	defer rows.Close()
 
 	user := model.User{}
@@ -293,7 +293,7 @@ func (repository *UserRepositoryImpl) FindByEmail(ctx context.Context, tx *sql.T
 			&user.UserName,
 			&user.UserPassword,
 			&user.UserLangCode)
-		helper.PanicIfError(err)
+		helper.IfError(err)
 	}
 
 	return user, nil
@@ -311,7 +311,7 @@ func (repository *UserRepositoryImpl) FindByTokenRefresh(ctx context.Context, tx
 				user_token_refresh = ?
 				AND deleted_at IS NULL`
 	rows, err := tx.QueryContext(ctx, SQL, userTokenRefresh)
-	helper.PanicIfError(err)
+	helper.IfError(err)
 	defer rows.Close()
 
 	user := model.User{}
@@ -321,7 +321,7 @@ func (repository *UserRepositoryImpl) FindByTokenRefresh(ctx context.Context, tx
 			&user.UserName,
 			&user.UserPassword,
 			&user.UserLangCode)
-		helper.PanicIfError(err)
+		helper.IfError(err)
 	}
 
 	return user, nil
@@ -342,7 +342,7 @@ func (repository *UserRepositoryImpl) UpdateToken(ctx context.Context, tx *sql.T
 		user.UserTokenRefresh,
 		user.UserLastLogin,
 		user.UserId)
-	helper.PanicIfError(err)
+	helper.IfError(err)
 
 	return user
 }
@@ -357,7 +357,7 @@ func (repository *UserRepositoryImpl) Logout(ctx context.Context, tx *sql.Tx, us
 				user_id = ?
 				AND deleted_at IS NULL`
 	_, err := tx.ExecContext(ctx, SQL, user.UserId)
-	helper.PanicIfError(err)
+	helper.IfError(err)
 
 	return user
 }

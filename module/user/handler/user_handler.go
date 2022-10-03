@@ -50,7 +50,7 @@ func (h *UserHandler) Create(context *gin.Context) {
 	userCreateRequest.CreatedAt = currentTime.Format("2006-01-02 15:04:05")
 
 	hashedPassword, err := bcrypt.GenerateFromPassword(password, bcrypt.DefaultCost)
-	helper.PanicIfError(err)
+	helper.IfError(err)
 
 	userCreateRequest.UserPassword = string(hashedPassword)
 
@@ -110,7 +110,7 @@ func (h *UserHandler) Update(context *gin.Context) {
 
 	userId := context.Param("userId")
 	id, err := strconv.Atoi(userId)
-	helper.PanicIfError(err)
+	helper.IfError(err)
 
 	userUpdateRequest.UserId = id
 
@@ -182,7 +182,7 @@ func (h *UserHandler) Delete(context *gin.Context) {
 
 	userId := context.Param("userId")
 	id, err := strconv.Atoi(userId)
-	helper.PanicIfError(err)
+	helper.IfError(err)
 
 	if userDeleteRequest.IsSoftDelete {
 		userDeleteRequest.UserId = id
@@ -246,7 +246,7 @@ func (h *UserHandler) FindById(context *gin.Context) {
 
 	userId := context.Param("userId")
 	id, err := strconv.Atoi(userId)
-	helper.PanicIfError(err)
+	helper.IfError(err)
 
 	userResponse := h.UserService.FindById(context, id)
 

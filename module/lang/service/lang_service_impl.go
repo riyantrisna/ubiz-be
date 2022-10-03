@@ -22,13 +22,13 @@ func NewLangService(DB *sql.DB, langRepo repository.LangRepository) LangService 
 
 func (service *LangServiceImpl) Create(ctx context.Context, request model.LangCreateRequest) model.LangResponse {
 	tx, err := service.DB.Begin()
-	helper.PanicIfError(err)
+	helper.IfError(err)
 	defer helper.CommitOrRollback(tx)
 
 	langData := service.LangRepository.Save(ctx, tx, request)
 	if langData.LangId > 0 {
 		langData, err := service.LangRepository.FindById(ctx, tx, langData.LangId)
-		helper.PanicIfError(err)
+		helper.IfError(err)
 
 		return model.ToLangResponse(langData)
 	} else {
@@ -38,7 +38,7 @@ func (service *LangServiceImpl) Create(ctx context.Context, request model.LangCr
 
 func (service *LangServiceImpl) Update(ctx context.Context, request model.LangUpdateRequest) model.LangResponse {
 	tx, err := service.DB.Begin()
-	helper.PanicIfError(err)
+	helper.IfError(err)
 	defer helper.CommitOrRollback(tx)
 
 	langData, err := service.LangRepository.FindById(ctx, tx, request.LangId)
@@ -46,7 +46,7 @@ func (service *LangServiceImpl) Update(ctx context.Context, request model.LangUp
 		langData = service.LangRepository.Update(ctx, tx, request)
 
 		langData, err := service.LangRepository.FindById(ctx, tx, langData.LangId)
-		helper.PanicIfError(err)
+		helper.IfError(err)
 
 		return model.ToLangResponse(langData)
 	}
@@ -56,7 +56,7 @@ func (service *LangServiceImpl) Update(ctx context.Context, request model.LangUp
 
 func (service *LangServiceImpl) Delete(ctx context.Context, langId int) model.LangResponse {
 	tx, err := service.DB.Begin()
-	helper.PanicIfError(err)
+	helper.IfError(err)
 	defer helper.CommitOrRollback(tx)
 
 	langData, err := service.LangRepository.FindById(ctx, tx, langId)
@@ -69,7 +69,7 @@ func (service *LangServiceImpl) Delete(ctx context.Context, langId int) model.La
 
 func (service *LangServiceImpl) FindById(ctx context.Context, langId int) model.LangResponse {
 	tx, err := service.DB.Begin()
-	helper.PanicIfError(err)
+	helper.IfError(err)
 	defer helper.CommitOrRollback(tx)
 
 	langData, _ := service.LangRepository.FindById(ctx, tx, langId)
@@ -79,7 +79,7 @@ func (service *LangServiceImpl) FindById(ctx context.Context, langId int) model.
 
 func (service *LangServiceImpl) FindAll(ctx context.Context) []model.LangResponse {
 	tx, err := service.DB.Begin()
-	helper.PanicIfError(err)
+	helper.IfError(err)
 	defer helper.CommitOrRollback(tx)
 
 	langsData := service.LangRepository.FindAll(ctx, tx)

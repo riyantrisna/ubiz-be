@@ -22,13 +22,13 @@ func NewUserService(DB *sql.DB, userRepo repository.UserRepository) UserService 
 
 func (service *UserServiceImpl) Create(ctx context.Context, request model.UserCreateRequest) model.UserResponse {
 	tx, err := service.DB.Begin()
-	helper.PanicIfError(err)
+	helper.IfError(err)
 	defer helper.CommitOrRollback(tx)
 
 	userData := service.UserRepository.Save(ctx, tx, request)
 	if userData.UserId > 0 {
 		userData, err := service.UserRepository.FindById(ctx, tx, userData.UserId)
-		helper.PanicIfError(err)
+		helper.IfError(err)
 
 		return model.ToUserResponse(userData)
 	} else {
@@ -38,7 +38,7 @@ func (service *UserServiceImpl) Create(ctx context.Context, request model.UserCr
 
 func (service *UserServiceImpl) Update(ctx context.Context, request model.UserUpdateRequest) (model.UserResponse, string) {
 	tx, err := service.DB.Begin()
-	helper.PanicIfError(err)
+	helper.IfError(err)
 	defer helper.CommitOrRollback(tx)
 
 	userData, err := service.UserRepository.FindById(ctx, tx, request.UserId)
@@ -47,7 +47,7 @@ func (service *UserServiceImpl) Update(ctx context.Context, request model.UserUp
 		userData = service.UserRepository.Update(ctx, tx, request)
 
 		userData, err := service.UserRepository.FindById(ctx, tx, userData.UserId)
-		helper.PanicIfError(err)
+		helper.IfError(err)
 
 		return model.ToUserResponse(userData), userPhoto
 	}
@@ -57,7 +57,7 @@ func (service *UserServiceImpl) Update(ctx context.Context, request model.UserUp
 
 func (service *UserServiceImpl) Delete(ctx context.Context, userId int) model.UserResponse {
 	tx, err := service.DB.Begin()
-	helper.PanicIfError(err)
+	helper.IfError(err)
 	defer helper.CommitOrRollback(tx)
 
 	userData, err := service.UserRepository.FindById(ctx, tx, userId)
@@ -70,7 +70,7 @@ func (service *UserServiceImpl) Delete(ctx context.Context, userId int) model.Us
 
 func (service *UserServiceImpl) SoftDelete(ctx context.Context, request model.UserDeleteRequest) model.UserResponse {
 	tx, err := service.DB.Begin()
-	helper.PanicIfError(err)
+	helper.IfError(err)
 	defer helper.CommitOrRollback(tx)
 
 	userData, err := service.UserRepository.FindById(ctx, tx, request.UserId)
@@ -87,7 +87,7 @@ func (service *UserServiceImpl) SoftDelete(ctx context.Context, request model.Us
 
 func (service *UserServiceImpl) FindById(ctx context.Context, userId int) model.UserResponse {
 	tx, err := service.DB.Begin()
-	helper.PanicIfError(err)
+	helper.IfError(err)
 	defer helper.CommitOrRollback(tx)
 
 	userData, _ := service.UserRepository.FindById(ctx, tx, userId)
@@ -97,7 +97,7 @@ func (service *UserServiceImpl) FindById(ctx context.Context, userId int) model.
 
 func (service *UserServiceImpl) FindAll(ctx context.Context) []model.UserResponse {
 	tx, err := service.DB.Begin()
-	helper.PanicIfError(err)
+	helper.IfError(err)
 	defer helper.CommitOrRollback(tx)
 
 	usersData := service.UserRepository.FindAll(ctx, tx)
@@ -107,7 +107,7 @@ func (service *UserServiceImpl) FindAll(ctx context.Context) []model.UserRespons
 
 func (service *UserServiceImpl) FindByEmail(ctx context.Context, userEmail string) model.UserLoginResponse {
 	tx, err := service.DB.Begin()
-	helper.PanicIfError(err)
+	helper.IfError(err)
 	defer helper.CommitOrRollback(tx)
 
 	userData, _ := service.UserRepository.FindByEmail(ctx, tx, userEmail)
@@ -117,7 +117,7 @@ func (service *UserServiceImpl) FindByEmail(ctx context.Context, userEmail strin
 
 func (service *UserServiceImpl) FindByTokenRefresh(ctx context.Context, userTokenRefresh string) model.UserLoginResponse {
 	tx, err := service.DB.Begin()
-	helper.PanicIfError(err)
+	helper.IfError(err)
 	defer helper.CommitOrRollback(tx)
 
 	userData, _ := service.UserRepository.FindByTokenRefresh(ctx, tx, userTokenRefresh)
@@ -127,7 +127,7 @@ func (service *UserServiceImpl) FindByTokenRefresh(ctx context.Context, userToke
 
 func (service *UserServiceImpl) UpdateToken(ctx context.Context, request model.UserUpdateTokenRequest) model.UserResponse {
 	tx, err := service.DB.Begin()
-	helper.PanicIfError(err)
+	helper.IfError(err)
 	defer helper.CommitOrRollback(tx)
 
 	userData, err := service.UserRepository.FindById(ctx, tx, request.UserId)
@@ -145,7 +145,7 @@ func (service *UserServiceImpl) UpdateToken(ctx context.Context, request model.U
 
 func (service *UserServiceImpl) Logout(ctx context.Context, userId int) model.UserResponse {
 	tx, err := service.DB.Begin()
-	helper.PanicIfError(err)
+	helper.IfError(err)
 	defer helper.CommitOrRollback(tx)
 
 	userData, err := service.UserRepository.FindById(ctx, tx, userId)

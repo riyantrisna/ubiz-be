@@ -90,7 +90,7 @@ func (h *TranslationHandler) Update(context *gin.Context) {
 
 	translationId := context.Param("translationId")
 	id, err := strconv.Atoi(translationId)
-	helper.PanicIfError(err)
+	helper.IfError(err)
 
 	translationUpdateRequest.TranslationId = id
 
@@ -135,7 +135,7 @@ func (h *TranslationHandler) Delete(context *gin.Context) {
 
 	translationId := context.Param("translationId")
 	id, err := strconv.Atoi(translationId)
-	helper.PanicIfError(err)
+	helper.IfError(err)
 
 	translationResponse := h.TranslationService.Delete(context, id)
 
@@ -164,7 +164,7 @@ func (h *TranslationHandler) FindById(context *gin.Context) {
 
 	translationId := context.Param("translationId")
 	id, err := strconv.Atoi(translationId)
-	helper.PanicIfError(err)
+	helper.IfError(err)
 
 	translationResponse := h.TranslationService.FindById(context, id)
 

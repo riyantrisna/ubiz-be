@@ -33,10 +33,10 @@ func (repository *TranslationRepositoryImpl) Save(ctx context.Context, tx *sql.T
 		translation.TranslationKey,
 		translation.CreatedBy,
 		translation.CreatedAt)
-	helper.PanicIfError(err)
+	helper.IfError(err)
 
 	id, err := result.LastInsertId()
-	helper.PanicIfError(err)
+	helper.IfError(err)
 
 	res := model.Translation{}
 	res.TranslationId = int(id)
@@ -59,10 +59,10 @@ func (repository *TranslationRepositoryImpl) SaveText(ctx context.Context, tx *s
 		translationText.TranslationTextTranslationId,
 		translationText.TranslationTextLangCode,
 		translationText.TranslationTextLangText)
-	helper.PanicIfError(err)
+	helper.IfError(err)
 
 	total, err := result.RowsAffected()
-	helper.PanicIfError(err)
+	helper.IfError(err)
 
 	if total > 0 {
 		return true
@@ -85,7 +85,7 @@ func (repository *TranslationRepositoryImpl) Update(ctx context.Context, tx *sql
 		translation.UpdatedBy,
 		translation.UpdatedAt,
 		translation.TranslationId)
-	helper.PanicIfError(err)
+	helper.IfError(err)
 
 	res := model.Translation{}
 	res.TranslationId = translation.TranslationId
@@ -95,13 +95,13 @@ func (repository *TranslationRepositoryImpl) Update(ctx context.Context, tx *sql
 func (repository *TranslationRepositoryImpl) Delete(ctx context.Context, tx *sql.Tx, translation model.Translation) {
 	SQL := `DELETE FROM lang_key WHERE langkey_id = ?`
 	_, err := tx.ExecContext(ctx, SQL, translation.TranslationId)
-	helper.PanicIfError(err)
+	helper.IfError(err)
 }
 
 func (repository *TranslationRepositoryImpl) DeleteText(ctx context.Context, tx *sql.Tx, translation model.TranslationTextDeleteRequest) {
 	SQL := `DELETE FROM lang_key_text WHERE langkeytext_langkey_id = ?`
 	_, err := tx.ExecContext(ctx, SQL, translation.TranslationTextTranslationId)
-	helper.PanicIfError(err)
+	helper.IfError(err)
 }
 
 func (repository *TranslationRepositoryImpl) FindById(ctx context.Context, tx *sql.Tx, translationId int) (model.Translation, error) {
@@ -117,7 +117,7 @@ func (repository *TranslationRepositoryImpl) FindById(ctx context.Context, tx *s
 			WHERE 
 				langkey_id = ?`
 	rows, err := tx.QueryContext(ctx, SQL, translationId)
-	helper.PanicIfError(err)
+	helper.IfError(err)
 	defer rows.Close()
 
 	translation := model.Translation{}
@@ -129,7 +129,7 @@ func (repository *TranslationRepositoryImpl) FindById(ctx context.Context, tx *s
 			&translation.CreatedAtCheck,
 			&translation.UpdatedByCheck,
 			&translation.UpdatedAtCheck)
-		helper.PanicIfError(err)
+		helper.IfError(err)
 	}
 
 	if translation.CreatedByCheck.Valid {
@@ -158,7 +158,7 @@ func (repository *TranslationRepositoryImpl) TextFindById(ctx context.Context, t
 			WHERE
 				langkeytext_langkey_id = ?`
 	rows, err := tx.QueryContext(ctx, SQL, translationId)
-	helper.PanicIfError(err)
+	helper.IfError(err)
 	defer rows.Close()
 
 	var translations []model.TranslationText
@@ -168,7 +168,7 @@ func (repository *TranslationRepositoryImpl) TextFindById(ctx context.Context, t
 			&translation.TranslationTextTranslationId,
 			&translation.TranslationTextLangCode,
 			&translation.TranslationTextLangText)
-		helper.PanicIfError(err)
+		helper.IfError(err)
 
 		translations = append(translations, translation)
 	}
@@ -187,7 +187,7 @@ func (repository *TranslationRepositoryImpl) FindAll(ctx context.Context, tx *sq
 			FROM 
 				lang_key`
 	rows, err := tx.QueryContext(ctx, SQL)
-	helper.PanicIfError(err)
+	helper.IfError(err)
 	defer rows.Close()
 
 	var translations []model.Translation
@@ -200,7 +200,7 @@ func (repository *TranslationRepositoryImpl) FindAll(ctx context.Context, tx *sq
 			&translation.CreatedAtCheck,
 			&translation.UpdatedByCheck,
 			&translation.UpdatedAtCheck)
-		helper.PanicIfError(err)
+		helper.IfError(err)
 
 		if translation.CreatedByCheck.Valid {
 			translation.CreatedBy = int(translation.CreatedByCheck.Int32)
@@ -230,13 +230,13 @@ func (repository *TranslationRepositoryImpl) Translation(ctx context.Context, tx
 			WHERE
 				b.langkey_key = ?`
 	rows, err := tx.QueryContext(ctx, SQL, langCode, key)
-	helper.PanicIfError(err)
+	helper.IfError(err)
 	defer rows.Close()
 
 	if rows.Next() {
 		var translation string
 		err := rows.Scan(&translation)
-		helper.PanicIfError(err)
+		helper.IfError(err)
 		if err == nil {
 			return translation
 		} else {
@@ -255,7 +255,7 @@ func (repository *TranslationRepositoryImpl) CheckKeyTranslationExist(ctx contex
 			WHERE
 				langkey_key = ?`
 	rows, err := tx.QueryContext(ctx, SQL, key)
-	helper.PanicIfError(err)
+	helper.IfError(err)
 	defer rows.Close()
 
 	if rows.Next() {

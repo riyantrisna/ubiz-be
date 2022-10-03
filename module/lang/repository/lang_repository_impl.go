@@ -36,10 +36,10 @@ func (repository *LangRepositoryImpl) Save(ctx context.Context, tx *sql.Tx, lang
 		lang.LangName,
 		lang.CreatedBy,
 		lang.CreatedAt)
-	helper.PanicIfError(err)
+	helper.IfError(err)
 
 	id, err := result.LastInsertId()
-	helper.PanicIfError(err)
+	helper.IfError(err)
 
 	res := model.Lang{}
 	res.LangId = int(id)
@@ -62,7 +62,7 @@ func (repository *LangRepositoryImpl) Update(ctx context.Context, tx *sql.Tx, la
 		lang.UpdatedBy,
 		lang.UpdatedAt,
 		lang.LangId)
-	helper.PanicIfError(err)
+	helper.IfError(err)
 
 	res := model.Lang{}
 	res.LangId = lang.LangId
@@ -72,7 +72,7 @@ func (repository *LangRepositoryImpl) Update(ctx context.Context, tx *sql.Tx, la
 func (repository *LangRepositoryImpl) Delete(ctx context.Context, tx *sql.Tx, lang model.Lang) {
 	SQL := `DELETE FROM lang WHERE lang_id = ?`
 	_, err := tx.ExecContext(ctx, SQL, lang.LangId)
-	helper.PanicIfError(err)
+	helper.IfError(err)
 }
 
 func (repository *LangRepositoryImpl) FindById(ctx context.Context, tx *sql.Tx, langId int) (model.Lang, error) {
@@ -89,7 +89,7 @@ func (repository *LangRepositoryImpl) FindById(ctx context.Context, tx *sql.Tx, 
 			WHERE 
 				lang_id = ?`
 	rows, err := tx.QueryContext(ctx, SQL, langId)
-	helper.PanicIfError(err)
+	helper.IfError(err)
 	defer rows.Close()
 
 	lang := model.Lang{}
@@ -102,7 +102,7 @@ func (repository *LangRepositoryImpl) FindById(ctx context.Context, tx *sql.Tx, 
 			&lang.CreatedAtCheck,
 			&lang.UpdatedByCheck,
 			&lang.UpdatedAtCheck)
-		helper.PanicIfError(err)
+		helper.IfError(err)
 	}
 
 	if lang.CreatedByCheck.Valid {
@@ -133,7 +133,7 @@ func (repository *LangRepositoryImpl) FindAll(ctx context.Context, tx *sql.Tx) [
 			FROM 
 				lang`
 	rows, err := tx.QueryContext(ctx, SQL)
-	helper.PanicIfError(err)
+	helper.IfError(err)
 	defer rows.Close()
 
 	var langs []model.Lang
@@ -147,7 +147,7 @@ func (repository *LangRepositoryImpl) FindAll(ctx context.Context, tx *sql.Tx) [
 			&lang.CreatedAtCheck,
 			&lang.UpdatedByCheck,
 			&lang.UpdatedAtCheck)
-		helper.PanicIfError(err)
+		helper.IfError(err)
 
 		if lang.CreatedByCheck.Valid {
 			lang.CreatedBy = int(lang.CreatedByCheck.Int32)

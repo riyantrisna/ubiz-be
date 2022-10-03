@@ -21,7 +21,7 @@ func NewMysqlDB(cfg *configs.Config) *sql.DB {
 
 	url := fmt.Sprintf("%s:%s@tcp(%s:%d)/%s", dbUser, dbPass, dbHost, dbPort, dbName)
 	db, err := sql.Open("mysql", url)
-	helper.PanicIfError(err)
+	helper.IfError(err)
 
 	db.SetMaxIdleConns(maxIdleConns)
 	db.SetMaxOpenConns(maxOpenConns)

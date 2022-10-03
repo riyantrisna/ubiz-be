@@ -1,15 +1,18 @@
 package helper
 
-import "database/sql"
+import (
+	"database/sql"
+	"fmt"
+)
 
 func CommitOrRollback(tx *sql.Tx) {
 	err := recover()
 	if err != nil {
 		errorRollback := tx.Rollback()
-		PanicIfError(errorRollback)
-		panic(err)
+		IfError(errorRollback)
+		fmt.Println(err)
 	} else {
 		errorCommit := tx.Commit()
-		PanicIfError(errorCommit)
+		IfError(errorCommit)
 	}
 }

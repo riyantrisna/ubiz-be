@@ -41,14 +41,14 @@ func UploadFile(context *gin.Context, requestName string, destination string) (s
 
 	file, handler, err := context.Request.FormFile(requestName)
 	if err != nil {
-		PanicIfError(err)
+		IfError(err)
 	}
 	defer file.Close()
 
 	var fileName = currentTime.Format("20060102150405") + handler.Filename
 	f, err := os.OpenFile(destination+fileName, os.O_WRONLY|os.O_CREATE, 0666)
 	if err != nil {
-		PanicIfError(err)
+		IfError(err)
 	}
 	defer f.Close()
 
@@ -61,5 +61,5 @@ func DeleteFile(fileName string, destination string) {
 	dir, _ := os.Getwd()
 	fileLocation := filepath.Join(dir, destination+fileName)
 	err := os.Remove(fileLocation)
-	PanicIfError(err)
+	IfError(err)
 }
