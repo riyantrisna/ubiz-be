@@ -7,7 +7,6 @@ import (
 	"collapp/module/lang/service"
 	translationService "collapp/module/translation/service"
 	"database/sql"
-	"fmt"
 	"net/http"
 	"strconv"
 	"time"
@@ -97,8 +96,6 @@ func (h *LangHandler) Update(context *gin.Context) {
 		context.JSON(http.StatusBadRequest, webResponse)
 		return
 	}
-
-	fmt.Println(langUpdateRequest)
 
 	langResponse := h.LangService.Update(context, langUpdateRequest)
 

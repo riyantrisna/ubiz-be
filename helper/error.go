@@ -1,9 +1,11 @@
 package helper
 
-import "fmt"
+import (
+	"log"
+)
 
 func IfError(err error) {
 	if err != nil {
-		fmt.Println(err)
+		log.Fatalln(err)
 	}
 }
